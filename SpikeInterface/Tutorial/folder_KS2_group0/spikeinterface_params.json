@@ -1,0 +1,34 @@
+{
+    "sorter_name": "kilosort3",
+    "sorter_params": {
+        "detect_threshold": 6,
+        "projection_threshold": [
+            9,
+            9
+        ],
+        "preclust_threshold": 8,
+        "car": true,
+        "minFR": 0.2,
+        "minfr_goodchannels": 0.2,
+        "nblocks": 5,
+        "sig": 20,
+        "freq_min": 300,
+        "sigmaMask": 30,
+        "nPCs": 3,
+        "ntbuff": 64,
+        "nfilt_factor": 4,
+        "do_correction": true,
+        "NT": 65600,
+        "AUCsplit": 0.8,
+        "wave_length": 61,
+        "keep_good_only": false,
+        "skip_kilosort_preprocessing": false,
+        "scaleproc": null,
+        "save_rez_to_mat": false,
+        "delete_tmp_files": true,
+        "delete_recording_dat": false,
+        "n_jobs": 8,
+        "chunk_duration": "1s",
+        "progress_bar": true
+    }
+}

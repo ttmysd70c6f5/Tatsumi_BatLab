@@ -1,0 +1,5 @@
+{
+    "ms_before": 0.5,
+    "ms_after": 0.5,
+    "method": "center_of_mass"
+}

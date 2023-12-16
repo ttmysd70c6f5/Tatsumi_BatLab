@@ -1,0 +1,32 @@
+{
+    "sorter_name": "spykingcircus2",
+    "sorter_params": {
+        "general": {
+            "ms_before": 2,
+            "ms_after": 2,
+            "local_radius_um": 100
+        },
+        "waveforms": {
+            "max_spikes_per_unit": 200,
+            "overwrite": true
+        },
+        "filtering": {
+            "dtype": "float32"
+        },
+        "detection": {
+            "peak_sign": "neg",
+            "detect_threshold": 5
+        },
+        "selection": {
+            "n_peaks_per_channel": 5000,
+            "min_n_peaks": 20000
+        },
+        "localization": {},
+        "clustering": {},
+        "matching": {},
+        "registration": {},
+        "apply_preprocessing": true,
+        "shared_memory": false,
+        "job_kwargs": {}
+    }
+}

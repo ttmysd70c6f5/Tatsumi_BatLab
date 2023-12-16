@@ -1,0 +1,14 @@
+{
+    "sorter_name": "tridesclous",
+    "sorter_params": {
+        "freq_min": 400.0,
+        "freq_max": 5000.0,
+        "detect_sign": -1,
+        "detect_threshold": 6,
+        "common_ref_removal": false,
+        "nested_params": null,
+        "n_jobs": 8,
+        "chunk_duration": "1s",
+        "progress_bar": true
+    }
+}

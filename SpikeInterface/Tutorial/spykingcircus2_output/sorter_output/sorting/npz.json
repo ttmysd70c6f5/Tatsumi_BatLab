@@ -1,0 +1,11 @@
+{
+    "class": "spikeinterface.core.npzsortingextractor.NpzSortingExtractor",
+    "module": "spikeinterface",
+    "kwargs": {
+        "file_path": "sorting_cached.npz"
+    },
+    "version": "0.98.2",
+    "relative_paths": true,
+    "annotations": {},
+    "properties": {}
+}

@@ -1,0 +1,16 @@
+{
+    "sorter_name": "kilosort3",
+    "sorter_version": "unknown",
+    "datetime": "2023-09-20T17:58:22.531525",
+    "runtime_trace": [
+        "",
+        "(si_env) C:\\Users\\Tatsumi\\Documents\\GitHub\\SpikeInterface\\Tutorial>C:",
+        "",
+        "(si_env) C:\\Users\\Tatsumi\\Documents\\GitHub\\SpikeInterface\\Tutorial>cd C:\\Users\\Tatsumi\\Documents\\GitHub\\SpikeInterface\\Tutorial\\folder_KS2_group0\\sorter_output",
+        "",
+        "(si_env) C:\\Users\\Tatsumi\\Documents\\GitHub\\SpikeInterface\\Tutorial\\folder_KS2_group0\\sorter_output>matlab -nosplash -wait -r \"kilosort3_master('C:\\Users\\Tatsumi\\Documents\\GitHub\\SpikeInterface\\Tutorial\\folder_KS2_group0\\sorter_output', 'C:\\Users\\Tatsumi\\Documents\\GitHub\\Kilosort')\""
+    ],
+    "error": true,
+    "error_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\Tatsumi\\AppData\\Local\\anaconda3\\envs\\si_env\\lib\\site-packages\\spikeinterface\\sorters\\basesorter.py\", line 234, in run_from_folder\n    SorterClass._run_from_folder(sorter_output_folder, sorter_params, verbose)\n  File \"C:\\Users\\Tatsumi\\AppData\\Local\\anaconda3\\envs\\si_env\\lib\\site-packages\\spikeinterface\\sorters\\external\\kilosortbase.py\", line 215, in _run_from_folder\n    raise Exception(f\"{cls.sorter_name} returned a non-zero exit code\")\nException: kilosort3 returned a non-zero exit code\n",
+    "run_time": null
+}
