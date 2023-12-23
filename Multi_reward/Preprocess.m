@@ -25,6 +25,10 @@ if isempty(cdp_extracted)
     cd(cdp_dir.folder)
     ExtractCdp_AF_TY_v2('cdp') % Extract cdp data
     Process_extracted_cdp_TY_v0()
+    cdp_extracted   =   dir(fullfile(cdp_dir.folder,'extracted*'));
+    beh_dir         =   dir(fullfile(cdp_dir.folder,'Ext_Behavior*','Extracted_Behavior*'));
+    load(fullfile(cdp_extracted.folder,cdp_extracted.name))
+    load(fullfile(beh_dir.folder,beh_dir.name))
     cd(data_dir)
 elseif length(cdp_extracted) == 1
     disp('Behavior data are loaded.')
@@ -221,7 +225,95 @@ AnalogSignals(:,4)  =   AnalogSignals(:,4)+1.05;
 % [reward_vol,reward_times,reward_width,~]  =   findpeaks(normalize(reward_delivery,'zscore'),reward_t,'MinPeakHeight',3);
 
 
-%% Detect the flights to the feeders 
+%% Detect the flights to the feeders
+at_feeder   =   cell(n_tags,10);
+r_fd = [2.77,0.82,1.75; 2.79,-0.99,1.64; 2.78,1.29,0.84; 2.78,-1.43,0.80]; % Feeder position
+
+blanding = 1 - bflying;
+tiledlayout(2,5)
+
+for bb = 1:n_tags
+
+    landing_start    =   find(diff([blanding(1,bb);blanding(:,bb)])==1);
+    landing_end      =   find(diff([blanding(:,bb);blanding(end,bb)])==1);
+
+    if blanding(1,bb)~=1 && blanding(end,bb)~=1
+        landing_start(1) =   [];
+        landing_end(1) =   [];
+    elseif blanding(1,bb)==1 && blanding(end,bb)~=1
+        landing_start(1) = [];
+        landing_end(1:2) = [];
+    elseif bflying(1,bb)~=1 && bflying(end,bb)==1
+        landing_start(1) = [];
+        landing_start(end) = [];
+        landing_end(1) = [];
+    else
+        landing_start(1) = [];
+        landing_start(end) = [];
+        landing_end(1:2) = [];
+    end
+
+    if length(find(landing_start)) ~= length(find(landing_end))
+        error('# of takeoff and landing mismatch. Check the detection.')
+    end
+
+    at_feeder{bb,1} = landing_start;
+    at_feeder{bb,2} = landing_end;
+    
+    n_land    =   length(landing_start);
+    
+    feeder_distance = NaN(n_land,3);
+    for ll = 1:n_land
+        r_land   =   r(landing_start(ll):landing_end(ll),:,:);
+        r_land_median   =   median(r_land(:,:,bb));
+        
+        [closest_feeder, feeder_id] = min(vecnorm(r_fd-r_land_median,2,2));
+        feeder_distance(ll,1) = closest_feeder;
+        feeder_distance(ll,2) = feeder_id;
+        if closest_feeder < 0.5
+            feeder_distance(ll,3) = 1;
+        else
+            feeder_distance(ll,3) = 0;
+        end
+    end
+    at_feeder{bb,3} = feeder_distance;
+
+    % nexttile;histogram(at_feeder{bb,3}(1,:),linspace(0,6,30))
+end
+%%
+
+
+    
+
+    n_flight    =   length(takeoff_time);
+    interp_pts      =   20; % Interpolate each flight into 20 points
+    flight_feeder  =   zeros(n_flight,interp_pts*3+4);   % Col 1-60: interpolated position (x,y,z) during flights, col 21-24: landings on feeder 1-4
+
+    figure
+    tiledlayout(8,10,"TileSpacing","tight")
+    i_figure    =   0;
+    for fl  =   1:n_flight
+        r_flight    =   r(takeoff_time(fl):landing_time(fl)-1,:,bb);
+        r_interp    =   interp1(r_flight,linspace(1,size(r_flight,1),interp_pts),'linear');
+        
+        % check visually
+        if i_figure < 80
+            nexttile
+            hold on
+            plot3(r_flight(:,1),r_flight(:,2),r_flight(:,3)); view(0,90); % original
+            plot3(r_interp(:,1),r_interp(:,2),r_interp(:,3)); view(0,90); % interpolated trajectory
+            if i_figure == 0
+                legend('original','linear interp')
+            end
+            hold off
+    
+            i_figure = i_figure + 1;
+        end
+        flight_feeder(fl,1:interp_pts*3)    =   reshape(r_interp,[1,interp_pts*3]);
+    end
+    
+
+%% Detect feeding timings
 bb   =   1;
 
     takeoff_time    =   find(diff([bflying(1,bb);bflying(:,bb)])==1); % time when the bat takes off
@@ -274,7 +366,7 @@ bb   =   1;
         end
         flight_feeder(fl,1:interp_pts*3)    =   reshape(r_interp,[1,interp_pts*3]);
     end
-    
+
 %% Correct feeder positions (s)
 r_fd = [2.77,0.82,1.75; 2.79,-0.99,1.64; 2.78,1.29,0.84; 2.78,-1.43,0.80]; % Feeder position
 
