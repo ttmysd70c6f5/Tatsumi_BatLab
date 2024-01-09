@@ -1,4 +1,4 @@
-function ExtractCdp_AF_v1(fname,varargin)
+function ExtractCdp_AF_v1(fname,outdir,varargin)
 %% Extract tracking data from Ciholas RTLS acquisition
 % Data are recorded through a python script and saved in a ASCII file
 % Data columns (comma delimited) are defines as follows:
@@ -25,7 +25,7 @@ function ExtractCdp_AF_v1(fname,varargin)
 % ATTENTION !! Please be aware that the time vector will be shifted by 1.05s, relative to the M-9 3s TTL
 
 %Open a file to record a log
-fid = fopen('extract_log.txt','w');
+fid = fopen(fullfile(outdir,'extract_log.txt'),'w');
 
 %Load data, keep non-zero entries, sort according to ascending network times and delete duplicates
 file_name = dir(fullfile(cd, ['*' fname '*']));   file_name = file_name.name;
@@ -211,9 +211,9 @@ end
 
 %Save data
 if ~isempty(find((RTLS_data(:,1)==0 & RTLS_data(:,2)==tags_SN(1))))
-    save(['extracted_', file_name(1:end-4), '.mat'],'tag_data','sync_data','CDPmtdata','tag_data_filt','tag_ac_data','true_TTL');
+    save([outdir,'\extracted_', file_name(1:end-4), '.mat'],'tag_data','sync_data','CDPmtdata','tag_data_filt','tag_ac_data','true_TTL');
 else
-    save(['extracted_', file_name(1:end-4), '.mat'],'tag_data','sync_data','CDPmtdata','tag_data_filt','true_TTL');
+    save([outdir,'\extracted_', file_name(1:end-4), '.mat'],'tag_data','sync_data','CDPmtdata','tag_data_filt','true_TTL');
 end
 
 %% Plot Raw and Filtered position data

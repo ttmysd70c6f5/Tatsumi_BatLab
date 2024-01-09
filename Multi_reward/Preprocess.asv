@@ -7,9 +7,9 @@ n_session = 4;
 
 exp_info.n_session   =   n_session;
 exp_info.n_feeder    =   4;
-reward_list = {"pear","banana"};
+reward_flavor = {"pear","banana"};
 reward_session = [1,2,0,0; 2,1,0,0; 1,2,0,0; 1,2,0,0]; % row = session, col = flavor. number is corresponding to the flavor in reward_flavor. 0 = no flavor is allocated.
-exp_info.reward_list = reward_list;
+exp_info.reward_list = reward_flavor;
 exp_info.reward     =   reward_session;
 
 save('exp_info.mat','exp_info')
@@ -302,7 +302,7 @@ time_shift_session = first_reward_ts_global - first_reward_ts_local; % The sessi
 reward_times_corrected = reward_times(~reward_artifacts); % Exclude artifacts from detected reward signals
 for trial = 1:size(feeder_data,1)
     session = feeder_data(trial,14);
-    feeder_data(trial,15) = round(feeder_data(trial,11) + time_shift_session(session),2);
+    feeder_data(trial,15) = feeder_data(trial,11) + time_shift_session(session);
 end
 feeder_data_field{15} = 'global_time';
 
@@ -318,10 +318,8 @@ for trial = 1:size(feeder_data,1)
     session =   feeder_data(trial,14);
     feeder_data(trial,16) = reward_session(session,feeder);
 end
-feeder_data_field{16} = 'reward_type';
 
-save(fullfile(res_dir_path,'extracted_feeder.mat'),'feeder_data_field','feeder_data','reward_list')
-
+save(fullfile(res_dir_path,'extracted_feeder.m'),'feeder_data_field',)
 %% Detect the flights to the feeders
 at_feeder   =   cell(n_tags,10);
 r_fd = [2.77,0.82,1.75; 2.79,-0.99,1.64; 2.78,1.29,0.84; 2.78,-1.43,0.80]; % Feeder position

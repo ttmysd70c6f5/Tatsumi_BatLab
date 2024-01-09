@@ -1,4 +1,4 @@
-function Process_extracted_cdp_TY_v0()
+function Process_extracted_cdp_TY_v0(outdir)
 %% Function for the pre-processing of collective behavior (March 2022)
 % This script was modified from the script
 % "Process_Collective_Behavior_AF_v0.m" written by Angelo Forli.
@@ -63,7 +63,7 @@ end
 
 %=== Analysis folder for storing the results
 if options.save_data
-    analysis_directory=fullfile(pwd,['Ext_Behavior_',datestr(now, 'yymmdd_HHMM')]);
+    analysis_directory=fullfile(outdir,['Ext_Behavior_',datestr(now, 'yymmdd_HHMM')]);
     if ~exist(analysis_directory,'dir')
         mkdir(analysis_directory);
     end
