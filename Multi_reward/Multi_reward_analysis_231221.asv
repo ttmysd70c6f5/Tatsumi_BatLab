@@ -6,10 +6,10 @@
 n_session = 4;
 
 exp_info.n_session   =   n_session;
-exp_info.n_feeder    =   4;
-reward_flavor = {"pear","banana"};
-reward_session = [1,2,0,0; 2,1,0,0; 1,2,0,0; 1,2,0,0]; % row = session, col = flavor. number is corresponding to the flavor in reward_flavor. 0 = no flavor is allocated.
-exp_info.reward_list = reward_flavor;
+exp_info.n_feeder    =   2;
+reward_list = {"banana","grape"};
+reward_session = [1,2,0,0; 2,1,0,0]; % row = session, col = flavor. number is corresponding to the flavor in reward_flavor. 0 = no flavor is allocated.
+exp_info.reward_list = reward_list;
 exp_info.reward     =   reward_session;
 
 save('exp_info.mat','exp_info')
@@ -22,6 +22,8 @@ cortex_file =   fullfile(cortex_dir.folder,cortex_dir.name);
 reward_dir  =   dir(fullfile(data_dir,'reward','*.mat'));
 cdp_dir     =   dir(fullfile(data_dir,'cdp','*cdp*.txt'));
 cdp_file    =   fullfile(cdp_dir.folder,cdp_dir.name);
+serial_dir  =   dir(fullfile(data_dir,'*Serial_numbers*'));
+serial_file =   fullfile(serial_dir.folder,serial_dir.name);
 
 res_dir_path     =   fullfile(data_dir,'analysis');
 res_dir     =   dir(res_dir_path);
@@ -30,17 +32,23 @@ if isempty(res_dir)
 end
 
 %% Extract cdp
-cdp_extracted   =   dir(fullfile(res_dir_path,'extracted*'));
+cdp_extracted   =   dir(fullfile(res_dir_path,'extracted*cdp*'));
 beh_dir         =   dir(fullfile(res_dir_path,'Ext_Behavior*','Extracted_Behavior*'));
 if isempty(cdp_extracted)
     cd(cdp_dir.folder)
-    ExtractCdp_AF_TY_v2('cdp',res_dir_path) % Extract cdp data
+    serial_number = load(serial_file);
+    serial_number = serial_number';
+    ExtractCdp_AF_TY_v2('cdp',res_dir_path,'Include',serial_number) % Extract cdp data
+    cd(res_dir_path)
     Process_extracted_cdp_TY_v0(res_dir_path)
-    cdp_extracted   =   dir(fullfile(cdp_dir.folder,'extracted*'));
-    beh_dir         =   dir(fullfile(cdp_dir.folder,'Ext_Behavior*','Extracted_Behavior*'));
+    
+    cd(data_dir)
+    cdp_extracted   =   dir(fullfile(res_dir_path,'extracted*cdp*'));
+    beh_dir         =   dir(fullfile(res_dir_path,'Ext_Behavior*','Extracted_Behavior*'));
     load(fullfile(cdp_extracted.folder,cdp_extracted.name))
     load(fullfile(beh_dir.folder,beh_dir.name))
-    cd(data_dir)
+    
+    
 elseif length(cdp_extracted) == 1
     disp('Behavior data are found in the directory.')
     load(fullfile(cdp_extracted.folder,cdp_extracted.name))
@@ -180,13 +188,21 @@ end
 if length(TTL_cdp_times2)==length(true_TTL)
     TTL_cdp_times2    =   TTL_cdp_times2(true_TTL);
 end
-time_shift  =   TTL_cdp_times2 - TTL_cortex_times2;
+if length(TTL_cdp_times2) == length(TTL_cortex_times2)
+    disp('TTL signals match between cortex and cdp')
+    time_shift  =   TTL_cdp_times2 - TTL_cortex_times2;
 
-figure
-histogram(time_shift,'FaceColor','k')
-title('CDP - Cortex')
-xlabel('Time shift (sec)')
-ylabel('Frequency')
+    figure
+    histogram(time_shift,'FaceColor','k')
+    title('CDP - Cortex')
+    xlabel('Time shift (sec)')
+    ylabel('Frequency')
+    
+else
+    disp('TTL signals does not match between cortex and cdp')
+end
+    
+
 
 % shift Ciholas Time by 1.05s (t = 0 corresponds to the first '3s' Master-9 TTL)  
 AnalogSignals(:,4)  =   AnalogSignals(:,4)+1.05;    
@@ -241,9 +257,11 @@ first_reward_ts_local = zeros(n_session,1);
 for dd = 1:length(reward_dir)
     load(fullfile(reward_dir(dd).folder,reward_dir(dd).name),'bhv_data')
     n_trials = size(bhv_data.trials,1);
-    feeder_data_field      =   [bhv_data.fields,'session'];
+    feeder_data_field      =   bhv_data.fields;
+    feeder_data_field{9} = 'bat_ID';
+    feeder_data_field{14} = 'session';
     first_reward_ts_local(dd)     =   bhv_data.trials(find(bhv_data.trials(:,12),1,'first'),11); % the local timestamp of the first reward signal
-    bhv_data.trials  =   [bhv_data.trials,repmat(dd,n_trials,1)];
+    bhv_data.trials  =   [bhv_data.trials,repmat(dd,n_trials,1)]; % Session idx
     feeder_data = [feeder_data;bhv_data.trials];
 end
 
@@ -295,191 +313,324 @@ else
     error('Some rewarding landings might be ignored. Check the raw data.')
 end
 
-
-% Global timestamps assignment
-first_reward_ts_global  =   reward_times([true;reward_artifacts(1:end-1)]); % the first timestamps of true reward signals in each session
-time_shift_session = first_reward_ts_global - first_reward_ts_local; % The session start time in global time
-reward_times_corrected = reward_times(~reward_artifacts); % Exclude artifacts from detected reward signals
-for trial = 1:size(feeder_data,1)
-    session = feeder_data(trial,14);
-    feeder_data(trial,15) = feeder_data(trial,11) + time_shift_session(session);
-end
-feeder_data_field{15} = 'global_time';
-
-figure
-estimated_reward_time = feeder_data(feeder_data(:,12)==1,15);
-histogram(estimated_reward_time - reward_times_corrected)
-xlabel('lag (sec): Estimated - Correct reward time')
-ylabel('Count')
-
 % Add information to feeder data table
 for trial = 1:size(feeder_data,1)
     feeder  =   feeder_data(trial,10);
     session =   feeder_data(trial,14);
-    feeder_data(trial,16) = reward_session(session,feeder);
+    feeder_data(trial,15) = reward_session(session,feeder);
 end
+feeder_data_field{15} = 'reward_type';
 
-save(fullfile(res_dir_path,'extracted_feeder.m'),'feeder_data_field',)
-%% Detect the flights to the feeders
-at_feeder   =   cell(n_tags,10);
+
+% % Global timestamps assignment
+% first_reward_ts_global  =   reward_times([true;reward_artifacts(1:end-1)]); % the first timestamps of true reward signals in each session
+% time_offset_session = first_reward_ts_global - first_reward_ts_local; % The session start time in global time
+% reward_times_corrected = reward_times(~reward_artifacts); % Exclude artifacts from detected reward signals
+% for trial = 1:size(feeder_data,1)
+%     session = feeder_data(trial,14);
+%     feeder_data(trial,16) = round(feeder_data(trial,11) + time_offset_session(session),2);
+% end
+% feeder_data_field{16} = 'global_time';
+% 
+% figure
+% estimated_reward_time = feeder_data(feeder_data(:,12)==1,16);
+% histogram(estimated_reward_time - reward_times_corrected)
+% xlabel('lag (sec): Estimated - Correct reward time')
+% ylabel('Count')
+
+% Assign global timestamp to reward signal
+feeder_activation_ts_global = [];
+% feeder signals in each session
+for session = 1:n_session
+    feeder_activation_ts_local_session = feeder_data(feeder_data(:,14)==session,11); % local timestamp of feeder activation
+    feeder_activation_success_ts_local_session = feeder_data(feeder_data(:,14)==session & feeder_data(:,12)==1,11); % local timestamp of rewarded feeder activation
+    
+    artifact_idx = find(reward_artifacts); % idx of artifacts detected in analog signals
+    if session == 1
+        reward_ts_global_session = reward_times(1:artifact_idx(1)-1); % global timestamp of reward delivery
+    elseif session == n_session
+        reward_ts_global_session = reward_times(artifact_idx(session-1)+1:end); % global timestamp of reward delivery
+    else
+        reward_ts_global_session = reward_times(artifact_idx(session-1)+1:artifact_idx(session)-1); % global timestamp of reward delivery
+    end
+    feeder_activation_ts_global_session = interp1(feeder_activation_success_ts_local_session,reward_ts_global_session,feeder_activation_ts_local_session,'linear','extrap'); % interpolation of timestamps for non-rewarding feeder activation
+    feeder_activation_ts_global = [feeder_activation_ts_global;feeder_activation_ts_global_session];
+end
+feeder_data(:,16) = round(feeder_activation_ts_global,2);
+feeder_data_field{16} = 'global_time';
+
+save(fullfile(res_dir_path,'feeder.mat'),'feeder_data_field','feeder_data','reward_list')
+
+
+
+%% Detect all landings
+f   =   cell(n_tags,10); % Save the extracted behavior at the feeders
+f_fields = cell(1,10); % field name of f
 r_fd = [2.77,0.82,1.75; 2.79,-0.99,1.64; 2.78,1.29,0.84; 2.78,-1.43,0.80]; % Feeder position
 
+% Timing of landings was detected by Angelo's script
 blanding = 1 - bflying;
 
+% Compute the index of timestamps t for the start and end of landings for each bat.
+% Also extract the 3D positions for each landing and compute the median of these positions.
 for bb = 1:n_tags
 
     landing_start    =   find(diff([blanding(1,bb);blanding(:,bb)])==1);
     landing_end      =   find(diff([blanding(:,bb);blanding(end,bb)])==-1);
 
-    if blanding(1,bb)~=1 && blanding(end,bb)~=1
-        landing_start(1) =   [];
-        landing_end(1) =   [];
-    elseif blanding(1,bb)==1 && blanding(end,bb)~=1
-        landing_start(1) = [];
-        landing_end(1:2) = [];
-    elseif bflying(1,bb)~=1 && bflying(end,bb)==1
-        landing_start(1) = [];
-        landing_start(end) = [];
-        landing_end(1) = [];
-    else
-        landing_start(1) = [];
-        landing_start(end) = [];
-        landing_end(1:2) = [];
-    end
+    if blanding(1,bb)~=1 % if the bat was flying when the recording started
+        if blanding(end,bb)~=1 % if the bat was flying when the recording finished
+        else % if the bat was landing when the recording finished
+            landing_start(end) = [];
+        end
 
-    if length(find(landing_start)) ~= length(find(landing_end))
-        error('# of takeoff and landing mismatch. Check the detection.')
-    end
-
-    at_feeder{bb,1} = landing_start;
-    at_feeder{bb,2} = landing_end;
-    
-    n_land    =   length(landing_start);
-    
-    feeder_distance = NaN(n_land,3);
-    for ll = 1:n_land
-        r_land   =   r(landing_start(ll):landing_end(ll),:,:);
-        r_land_median   =   median(r_land(:,:,bb));
-        
-        [closest_feeder, feeder_id] = min(vecnorm(r_fd-r_land_median,2,2));
-        feeder_distance(ll,1) = closest_feeder;
-        feeder_distance(ll,2) = feeder_id;
-        if closest_feeder < 0.5
-            feeder_distance(ll,3) = 1;
-        else
-            feeder_distance(ll,3) = 0;
+    elseif blanding(1,bb)==1 % if the bat was landing when the recording started
+        if blanding(end,bb)~=1 % if the bat was flying when the recording finished
+            landing_end(1) = []; 
+        else % if the bat was landing when the recording finished
+            landing_start(end) = [];
+            landing_end(1) = [];
         end
     end
-    at_feeder{bb,3} = feeder_distance;
+
+    if length(landing_start) ~= length(landing_end)
+        error('# of takeoff and landing mismatch. Check the detection.')
+    else
+        fprintf('%dthe bat: %d landing was detected. \n',bb, length(landing_start))
+    end
+
+    f{bb,1} = t(landing_start);
+    f{bb,2} = t(landing_end);
+    f_fields{1} = 'land_start_t';
+    f_fields{2} = 'land_end_t';
+    
+    n_land = length(landing_start);
+    f{bb,3} = n_land;
+    f_fields{3} = 'n_land';
+     
+    r_land = cell(1,n_land);
+    r_land_median = cell(1,n_land);
+    for ll = 1:n_land
+        r_land{ll}   =   r(landing_start(ll):landing_end(ll),:,:);
+        r_land_median{ll}   =   median(r_land{ll}(:,:,bb));
+    end
+    f{bb,4} = r_land;
+    f{bb,5} = r_land_median;
+    f_fields{4} = 'r_land';
+    f_fields{5} = 'r_land_med';
+
+    % n_land    =   length(landing_start);
+    % 
+    % feeder_distance = NaN(n_land,3);
+    % for ll = 1:n_land
+    %     r_land   =   r(landing_start(ll):landing_end(ll),:,:);
+    %     r_land_median   =   median(r_land(:,:,bb));
+    % 
+    %     [closest_feeder, feeder_id] = min(vecnorm(r_fd-r_land_median,2,2));
+    %     feeder_distance(ll,1) = closest_feeder;
+    %     feeder_distance(ll,2) = feeder_id;
+    %     if closest_feeder < 0.5
+    %         feeder_distance(ll,3) = 1;
+    %     else
+    %         feeder_distance(ll,3) = 0;
+    %     end
+    % end
+    % f{bb,3} = feeder_distance;
 
     % nexttile;histogram(at_feeder{bb,3}(1,:),linspace(0,6,30))
+
+    
+    
+    bfeeder = feeder_data(feeder_data(:,strcmp(feeder_data_field,'bat_ID'))==bb,[9,10,12,15,16]);
+    bfeeder_fields = feeder_data_field([9,10,12,15,16]);
+
+    
+    f_fields{6} = 'activated_feeder';
+    f{bb,6} = feeder_data(feeder_data(:,strcmp(feeder_data_field,'bat_ID'))==bb,10);
+    f_fields{7} = 'outcome';
+    f{bb,7} = feeder_data(feeder_data(:,strcmp(feeder_data_field,'bat_ID'))==bb,12);
+    f_fields{8} = 'reward_type';
+    f{bb,8} = feeder_data(feeder_data(:,strcmp(feeder_data_field,'bat_ID'))==bb,15);
+    f_fields{9} = 'b_feeder_t';
+    f{bb,9} = feeder_data(feeder_data(:,strcmp(feeder_data_field,'bat_ID'))==bb,16);
+    
+
+    % % Exclude the feeder activation during flights
+    % t_feed = f{bb,6};
+    % include_flag = true(length(t_feed),1);
+    % for ll = 1:length(t_feed)
+    %     if find(f{bb,1} <= t_feed(ll),1,'last') ~= find(f{bb,2} >= t_feed(ll),1,'first')
+    %         include_flag(ll) = false;
+    %     end
+    % end
+    % f{bb,6} = f{bb,6}(include_flag);
+    % f{bb,7} = f{bb,7}(include_flag);
+    % f{bb,8} = f{bb,8}(include_flag);
+    % f{bb,9} = f{bb,9}(include_flag);
+
+    % Median of landing positions when the feeder is activated
+    t_feed = f{bb,9};
+    r_land_median = f{bb,5};
+    r_median_feed = cell(length(t_feed),1);
+    for ll = 1:length(t_feed)
+        r_median_feed{ll} = r_land_median{find(f{bb,1} <= t_feed(ll),1,'last')};
+    end
+    f{bb,10} = r_median_feed;
+    f_fields{10} = 'r_median_feed';
 end
 
-%% Visualize the landing position
-figure  
-tiledlayout(n_tags,1,"TileSpacing","tight")
+% % Check if the feeders are activated while the bats land
+% figure();   set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+% tiledlayout(n_tags,1,"TileSpacing",'tight')
+% 
+% for bb = 1:n_tags
+%     ax(bb) = nexttile;
+%     area(t,bflying(:,bb)*5,'FaceAlpha',0.5,'LineStyle','none'); 
+%     hold on
+%     % area(t,ismember(round(t,2),round(f{bb,strcmp(f_fields,'b_feeder_t')},2))*3,'FaceAlpha',0.7,'LineStyle','none','FaceColor','r')
+%     plot(t,r(:,1,bb))
+%     scatter(round(f{bb,strcmp(f_fields,'b_feeder_t')},2),5*ones(length(f{bb,strcmp(f_fields,'b_feeder_t')}),1),10,'k')
+%     hold off
+%     legend({'Fly','x','feeder'})
+% end
+% xlabel('Tiem (sec)')
+% linkaxes(ax)
+% 
+% % Coordinate of position when the feeders were activated
+% figure();   set(gcf, 'units','normalized','outerposition',[0 0.3 1 0.5]);
+% tiledlayout(1,3,"TileSpacing",'tight')
+% 
+% for bb = 1:n_tags
+%     r_med_feed = f{bb,10};
+% 
+%     nexttile(1); hold on
+%     for ll = 1:size(r_med_feed,1)
+%         scatter(r_med_feed{ll}(1),r_med_feed{ll}(2)) % XY
+%     end
+%     hold off
+%     xlim(r_lim(1,:))
+%     ylim(r_lim(2,:))
+%     xlabel('x')
+%     ylabel('y')
+% 
+%     nexttile(2); hold on
+%     for ll = 1:size(r_med_feed,1)
+%         scatter(r_med_feed{ll}(1),r_med_feed{ll}(3)) % XZ
+%     end
+%     hold off
+%     xlim(r_lim(1,:))
+%     ylim(r_lim(3,:))
+%     xlabel('x')
+%     ylabel('z')
+% 
+%     nexttile(3); hold on
+%     for ll = 1:size(r_med_feed,1)
+%         scatter(r_med_feed{ll}(2),r_med_feed{ll}(3)) % YZ
+%     end
+%     hold off
+%     xlim(r_lim(2,:))
+%     ylim(r_lim(3,:))
+%     xlabel('y')
+%     ylabel('z')
+% 
+%     pause(3)
+% end
+
+% %% Correct feeder positions (s)
+% r_fd = [2.77,0.82,1.75; 2.79,-0.99,1.64; 2.78,1.29,0.84; 2.78,-1.43,0.80]; % Feeder position
+% 
+% %=== Correct feeder position(s) 
+% if Group_name == 'D'
+%     [~,fd_idx] = min(vecnorm(r_fd-centroid_all,2,2));
+%     r_fd(1,:) = centroid_all(fd_idx,:);                                                  
+% else
+%     for i=1:4
+%     [feeder_distance,fd_idx] = min(vecnorm(r_fd(i,:)-centroid_all,2,2));
+%     if feeder_distance<0.2,r_fd(i,:) =  centroid_all(fd_idx,:);end  % Do not correct if further than 20 cm
+%     end
+% end
+
+%% Visualize all landing
 for bb = 1:n_tags
-    nexttile
-    plot(t,blanding(:,bb))
-end
 
-%%
-
-
+    t_feeder = f{bb,9};
+    n_land_feeder = length(t_feeder);
+    range_draw = 10; % range to visualize around the feeder activation timing
     
-
-    n_flight    =   length(takeoff_time);
-    interp_pts      =   20; % Interpolate each flight into 20 points
-    flight_feeder  =   zeros(n_flight,interp_pts*3+4);   % Col 1-60: interpolated position (x,y,z) during flights, col 21-24: landings on feeder 1-4
-
-    figure
-    tiledlayout(8,10,"TileSpacing","tight")
-    i_figure    =   0;
-    for fl  =   1:n_flight
-        r_flight    =   r(takeoff_time(fl):landing_time(fl)-1,:,bb);
-        r_interp    =   interp1(r_flight,linspace(1,size(r_flight,1),interp_pts),'linear');
-        
-        % check visually
-        if i_figure < 80
-            nexttile
-            hold on
-            plot3(r_flight(:,1),r_flight(:,2),r_flight(:,3)); view(0,90); % original
-            plot3(r_interp(:,1),r_interp(:,2),r_interp(:,3)); view(0,90); % interpolated trajectory
-            if i_figure == 0
-                legend('original','linear interp')
+    figure('Units','normalized','OuterPosition',[0,0.05,1,0.9])
+    tiledlayout(5,5,"TileSpacing",'loose')
+    figure_count = 1;
+    for ll = 1:n_land_feeder
+        idx_feeder = find(ismember(round(t,2),round(t_feeder(ll),2)));
+            if idx_feeder > 100*range_draw && idx_feeder < T - 100*range_draw
+                r_plot = r(idx_feeder-100*range_draw:idx_feeder+100*range_draw,:,bb);
+                t_plot = (-1*range_draw:0.01:range_draw)' + t(idx_feeder);
+                l_plot = blanding(idx_feeder-100*range_draw:idx_feeder+100*range_draw,bb);
+            elseif idx_feeder <= 100*range_draw
+                r_plot = r(1:idx_feeder+100*range_draw,:,bb);
+                t_plot = ((idx_feeder-1)/100:0.01:range_draw)' + t(idx_feeder);
+                l_plot = blanding(1:idx_feeder+100*range_draw,bb);
+            else
+                r_plot = r(idx_feeder-100*range_draw:end,:,bb);
+                t_plot = (-1*range_draw:0.01:(T-idx_feeder)/100)' + t(idx_feeder);
+                l_plot = blanding(idx_feeder-100*range_draw:end,bb);
             end
-            hold off
+        n = length(t_plot);
+        cd = [uint8(jet(n)*255) uint8(ones(n,1))].';
     
-            i_figure = i_figure + 1;
-        end
-        flight_feeder(fl,1:interp_pts*3)    =   reshape(r_interp,[1,interp_pts*3]);
-    end
+        % t_plot = t(idx_feeder-100*60:idx_feeder+100*30);
     
-
-%% Detect feeding timings
-bb   =   1;
-
-    takeoff_time    =   find(diff([bflying(1,bb);bflying(:,bb)])==1); % time when the bat takes off
-    landing_time    =   find(diff([bflying(1,bb);bflying(:,bb)])==-1); % time when the bat lands
-    % Exclude the initial flight because it is the flight from a career    
-    % Check if the recording does not start/end during the flight
-    if bflying(1,bb)~=1 && bflying(end,bb)~=1
-        takeoff_time(1) =   [];
-        landing_time(1) =   [];
-    elseif bflying(1,bb)==1 && bflying(end,bb)~=1
-        takeoff_time(1) = [];
-        landing_time(1:2) = [];
-    elseif bflying(1,bb)~=1 && bflying(end,bb)==1
-        takeoff_time(1) = [];
-        takeoff_time(end) = [];
-        landing_time(1) = [];
-    else
-        takeoff_time(1) = [];
-        takeoff_time(end) = [];
-        landing_time(1:2) = [];
-    end
-
-    if length(find(takeoff_time)) ~= length(find(landing_time))
-        error('# of takeoff and landing mismatch. Check the detection.')
-    end
-
-    n_flight    =   length(takeoff_time);
-    interp_pts      =   20; % Interpolate each flight into 20 points
-    flight_feeder  =   zeros(n_flight,interp_pts*3+4);   % Col 1-60: interpolated position (x,y,z) during flights, col 21-24: landings on feeder 1-4
-
-    figure
-    tiledlayout(8,10,"TileSpacing","tight")
-    i_figure    =   0;
-    for fl  =   1:n_flight
-        r_flight    =   r(takeoff_time(fl):landing_time(fl)-1,:,bb);
-        r_interp    =   interp1(r_flight,linspace(1,size(r_flight,1),interp_pts),'linear');
-        
-        % check visually
-        if i_figure < 80
-            nexttile
-            hold on
-            plot3(r_flight(:,1),r_flight(:,2),r_flight(:,3)); view(0,90); % original
-            plot3(r_interp(:,1),r_interp(:,2),r_interp(:,3)); view(0,90); % interpolated trajectory
-            if i_figure == 0
-                legend('original','linear interp')
+        nexttile([1,3])
+        hold on
+        plot(t_plot,r_plot,'LineWidth',1);
+        plot([t(idx_feeder),t(idx_feeder)],[-3,3],'k')
+        area(t_plot,l_plot,'FaceAlpha',0.2,'LineStyle','none','FaceColor',[0.3010 0.7450 0.9330])
+        hold off
+        xlim([t(idx_feeder)-range_draw,t(idx_feeder)+range_draw])
+        ylim([-3,3])
+        xlabel('Time (sec)')
+        legend({'x','y','z','Beam blocked'})
+    
+        nexttile([1,1])
+        hold on
+        p = plot(r_plot(:,1),r_plot(:,2));
+        drawnow
+        set(p.Edge, 'ColorBinding','interpolated', 'ColorData',cd)
+        scatter(r(idx_feeder,1,bb),r(idx_feeder,2,bb),20,'k','filled')
+        hold off
+        xlabel('x')
+        ylabel('y')
+        xlim([r_lim(1,1),r_lim(1,2)])
+        ylim([r_lim(2,1),r_lim(2,2)])
+    
+        nexttile([1,1])
+        hold on
+        p = plot(r_plot(:,2),r_plot(:,3));
+        drawnow
+        set(p.Edge, 'ColorBinding','interpolated', 'ColorData',cd)
+        scatter(r(idx_feeder,2,bb),r(idx_feeder,3,bb),20,'k','filled')
+        hold off
+        xlabel('y')
+        ylabel('z')
+        xlim([r_lim(2,1),r_lim(2,2)])
+        ylim([r_lim(3,1),r_lim(3,2)])
+    
+        if figure_count < 5
+            figure_count = figure_count + 1;
+        else
+            if ll ~= n_land_feeder
+                figure('Units','normalized','OuterPosition',[0,0.05,1,0.9])
+                tiledlayout(5,5,"TileSpacing",'loose')
+                figure_count = 1;
             end
-            hold off
-    
-            i_figure = i_figure + 1;
         end
-        flight_feeder(fl,1:interp_pts*3)    =   reshape(r_interp,[1,interp_pts*3]);
     end
-
-%% Correct feeder positions (s)
-r_fd = [2.77,0.82,1.75; 2.79,-0.99,1.64; 2.78,1.29,0.84; 2.78,-1.43,0.80]; % Feeder position
-
-%=== Correct feeder position(s) 
-if Group_name == 'D'
-    [~,fd_idx] = min(vecnorm(r_fd-centroid_all,2,2));
-    r_fd(1,:) = centroid_all(fd_idx,:);                                                  
-else
-    for i=1:4
-    [feeder_distance,fd_idx] = min(vecnorm(r_fd(i,:)-centroid_all,2,2));
-    if feeder_distance<0.2,r_fd(i,:) =  centroid_all(fd_idx,:);end  % Do not correct if further than 20 cm
+    
+    mkdir(fullfile(res_dir_path,'land_feeder'))
+    figHandles = findall(0,'Type','figure');
+    for i = 1:numel(figHandles)
+        saveas(figHandles(i),fullfile(res_dir_path,['land_feeder_bat' num2str(bb) '_' num2str(i) '.png']));
     end
+    close all;
+
 end

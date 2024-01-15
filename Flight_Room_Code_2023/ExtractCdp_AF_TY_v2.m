@@ -1,4 +1,4 @@
-function ExtractCdp_AF_v1(fname,outdir,varargin)
+function ExtractCdp_AF_TY_v2(fname,outdir,varargin)
 %% Extract tracking data from Ciholas RTLS acquisition
 % Data are recorded through a python script and saved in a ASCII file
 % Data columns (comma delimited) are defines as follows:
@@ -35,10 +35,10 @@ RTLS_data = sortrows(RTLS_data,3);
 RTLS_data = unique(RTLS_data,'rows','stable');
 detected_devices = unique(RTLS_data(:,2));
 
-% Ad hoc corrections
-if strcmp(file_name,'211218_cdp_fly_2.txt')
-    RTLS_data((RTLS_data(:,3)<6.3042e+14),:) = [];
-end
+% % Ad hoc corrections
+% if strcmp(file_name,'211218_cdp_fly_2.txt')
+%     RTLS_data((RTLS_data(:,3)<6.3042e+14),:) = [];
+% end
 
 %User inputs overrides
 tags_SN = detected_devices;
@@ -62,7 +62,7 @@ use_sync = 1;
 rec_duration = 10800;                                                                           %approx rec duration (s), 10800 covers 3 hours
 ntw_time = 15.65e-12;                                                                           %network tic interval (s)
 sync_SN = 17040920; %17106963;                                                                  %sync tag serial number
-if use_sync, tags_SN = setdiff(tags_SN,sync_SN);end
+if use_sync, tags_SN = setdiff(tags_SN,sync_SN,'stable');end
 n_tags = length(tags_SN);
 TTL_time_diff = [21; 13; 8; 5; 4];                                                              %TTL delays in s
 TTL_abs_times = [0; cumsum(repmat(TTL_time_diff,round(rec_duration*2/sum(TTL_time_diff)),1))];
