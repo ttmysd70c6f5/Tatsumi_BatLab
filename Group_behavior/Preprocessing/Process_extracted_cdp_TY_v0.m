@@ -1,4 +1,4 @@
-function Process_extracted_cdp_TY_v0(outdir)
+function Process_extracted_cdp_TY_v0()
 %% Function for the pre-processing of collective behavior (March 2022)
 % This script was modified from the script
 % "Process_Collective_Behavior_AF_v0.m" written by Angelo Forli.
@@ -54,6 +54,15 @@ options.save_data = 1;
 options.use_r_corr = 1;
 options.savemovie = 0;
 
+fig_cnt = 1;
+fig_dir = dir(fullfile(pwd,'Ext_Behavior*','*figure*.png'));
+for i = 1:length(fig_dir)
+    figstr = split(fig_dir(i).name,["figure",".png"]);
+    if fig_cnt <= str2double(figstr{end-1})
+        fig_cnt = str2double(figstr{end-1}) + 1;
+    end
+end
+
 %=== Custom graded colormap(level,RGB,bat)
 for i = 1:n_tags
     for j = 1:3
@@ -63,7 +72,7 @@ end
 
 %=== Analysis folder for storing the results
 if options.save_data
-    analysis_directory=fullfile(outdir,['Ext_Behavior_',datestr(now, 'yymmdd_HHMM')]);
+    analysis_directory=fullfile(pwd,['Ext_Behavior_',datestr(now, 'yymmdd_HHMM')]);
     if ~exist(analysis_directory,'dir')
         mkdir(analysis_directory);
     end
@@ -246,6 +255,7 @@ if options.show_fig
             
         end
         linkaxes(ax,'x');    xlabel('Time(s)'); xlim([0,t(T)]);
+
     end
      
     %=== FIGURE: Raw Velocity VS Corrected Velocity
@@ -257,6 +267,7 @@ if options.show_fig
         plot(t,v_abs(:,i),'.');    hold off;    legend('raw','corrected');      ylabel('m/s');
     end
     linkaxes(ax,'x');    xlabel('Time(s)'); xlim([0,t(T)]);  
+
     
     %=== FIGURE: Scatter plot all bats
     figure();       set(gcf, 'units','normalized','outerposition',[0 0.25 1 0.5]);
@@ -267,6 +278,7 @@ if options.show_fig
     end
     hold off;
     
+
     %=== FIGURE: Trajectories individual bats
     figure();   set(gcf, 'units','normalized','outerposition',[0.2 0.25 0.7 0.35]);
     tiledlayout(1,n_tags,'TileSpacing','none');
@@ -274,7 +286,7 @@ if options.show_fig
         nexttile;  plot3(r(:,1,i),r(:,2,i),r(:,3,i),'-','Color', bat_clr(i,:));  xlim(r_lim(1,:)); ylim(r_lim(2,:)); zlim(r_lim(3,:));  title(bat_nms(i,:));  view(90,90);
         axis equal;
     end
-    
+
     %=== FIGURE: Density Histograms heat-map
     figure();   set(gcf, 'units','normalized','outerposition',[0 0.25 1 0.35]);
     for i=1:n_tags
@@ -289,6 +301,7 @@ if options.show_fig
         axis square;
     end
     
+
     %=== FIGURE: Velocity and flight segmentation
     figure();       set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
     tiledlayout(n_tags,1,'TileSpacing','tight');
@@ -302,6 +315,7 @@ if options.show_fig
     end
     linkaxes(ax,'x');   xlabel('Time(s)');
     
+
 end
 
 %% Save figures and data

@@ -1,4 +1,4 @@
-function ExtractCdp_AF_TY_v2(fname,outdir,varargin)
+function ExtractCdp_AF_TY_v2(fname,outdir,use_sync,varargin)
 %% Extract tracking data from Ciholas RTLS acquisition
 % Data are recorded through a python script and saved in a ASCII file
 % Data columns (comma delimited) are defines as follows:
@@ -58,7 +58,7 @@ if nargin > 1
 end
 
 %Parameters
-use_sync = 1;
+% use_sync = 1;
 rec_duration = 10800;                                                                           %approx rec duration (s), 10800 covers 3 hours
 ntw_time = 15.65e-12;                                                                           %network tic interval (s)
 sync_SN = 17040920; %17106963;                                                                  %sync tag serial number
@@ -69,6 +69,7 @@ TTL_abs_times = [0; cumsum(repmat(TTL_time_diff,round(rec_duration*2/sum(TTL_tim
 CDPmtdata.Fs = 100;                                                                             %Acquisition frequency CDP (Hz)
 CDPmtdata.tag_SN = tags_SN;
 CDPmtdata.sync_SN = sync_SN;
+
 
 %Extract data and log CDP metadata, start from sync
 sync_data = RTLS_data(RTLS_data(:,1)==2 & RTLS_data(:,2)==sync_SN,2:end);
@@ -122,7 +123,12 @@ ax_a(n_tags+1) = subplot(n_tags+1,1,n_tags+1);
 plot((sync_data(:,2)-t0)*ntw_time/60, sync_data(:,3));  ylabel('Synch');              
 linkaxes(ax_a,'x');    xlabel('Time(s)');   sgtitle('x (ACCELERATION)');
 
+
 %% Interpolate time stamps (s) according to sync signal or network time
+% [~, TTL_findpeak] = findpeaks(normalize(sync_data(:,3),'zscore'),sync_data(:,2),'MinPeakHeight',1,'MinPeakDistance',2/ntw_time,'MinPeakWidth',0.048/ntw_time);
+% [~,~,TTL_risetime] =   risetime(normalize(sync_data(:,3),'zscore'),sync_data(:,2));
+% [~,TTL_risetime,~] =   risetime(normalize(sync_data(:,3),'zscore'),sync_data(:,2));
+% mean(TTL_findpeak-TTL_risetime)
 
 if use_sync
     %Detect network times corresponding to peaks in the sync signal separated by at least 2s
@@ -137,8 +143,8 @@ if use_sync
     %Detect network times corresponding to peaks in the sync signal separated by at least 2s
     % [~, TTL_network_times2] = findpeaks(normalize(sync_data(:,3),'zscore'),sync_data(:,2),'MinPeakHeight',1,'MinPeakDistance',2/ntw_time,'MinPeakWidth',0.048/ntw_time); % Avoid an artifact by turning the Master-9 off
 
-    % Detect network times corresponding to crossing 10% reference level in the sync signal
-    [~,TTL_network_times,~] =   risetime(normalize(sync_data(:,3),'zscore'),sync_data(:,2));
+    % Detect network times corresponding to crossing 90% reference level in the sync signal
+    [~,~,TTL_network_times] =   risetime(normalize(sync_data(:,3),'zscore'),sync_data(:,2));
     if length(TTL_network_times)==length(true_TTL)
         TTL_network_times       =   TTL_network_times(true_TTL);
     end
@@ -160,7 +166,7 @@ if use_sync
     subplot(211);   plot(diff(control),'.');    ylabel('TTL count');     xlabel('#TTL pair separated by 21s');
     subplot(212);   findpeaks(normalize(sync_data(:,3),'zscore'),sync_data(:,2),'MinPeakHeight',1,'MinPeakDistance',2/ntw_time,'MinPeakWidth',0.048/ntw_time);   xlabel('Packet#');     ylabel('Sync signal (a.u.)');
     sgtitle('---Synchronization Check---');
-    
+   
     %If no errors in TTL detection -> interpolate time from known TTL delays (M-9 is assumed to be the reference time!)
     if ~sync_err
         TTL_abs_times = TTL_abs_times(1:length(TTL_network_times));
@@ -200,6 +206,7 @@ else
             tag_ac_data{1,j}(:,8) = (tag_ac_data{1,j}(:,2)-sync_data(1,2)).*ntw_time;
         end
     end
+    true_TTL = [];
 end
 
 %% Filter position data with Quadratic regression and Save
@@ -252,6 +259,7 @@ subplot(121);     plot(diff(sync_data(:,2))*ntw_time);         xlabel('Packet#')
 subplot(122);     histogram(diff(sync_data(:,2))*ntw_time);    set(gca,'YScale','log'); xlabel('Network Time Difference(s)');  ylabel('Counts'); 
 disp(['Sync: Fs (network time VS interpolated): ' num2str(1/mean(diff(sync_data(:,2))*ntw_time),4) 'Hz VS ' num2str(1/mean(diff(sync_data(:,8))),4) ' Hz']);
 
+
 if any(diff(sync_data(:,8))>0.5)
     warning('!! Long acquisition pause detected !!');
 end
@@ -270,6 +278,7 @@ end
 end
 linkaxes(ax,'x');       linkaxes(bx,'x');
 
+
 %% Plot acceleration
 if ~isempty(find((RTLS_data(:,1)==0 & any(RTLS_data(:,2)==tags_SN'))))  
     figure('units','normalized','outerposition',[0.5 0 0.5 1]);   sgtitle('Tags data');
@@ -281,7 +290,9 @@ if ~isempty(find((RTLS_data(:,1)==0 & any(RTLS_data(:,2)==tags_SN'))))
         
     end
     linkaxes(ax_1,'x');       linkaxes(bx_1,'x');
-    
+
+  
+
     for j = 1:3
         figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis
         for i=1:n_tags
@@ -289,6 +300,8 @@ if ~isempty(find((RTLS_data(:,1)==0 & any(RTLS_data(:,2)==tags_SN'))))
             plot(tag_ac_data{1, i}(:,8), tag_ac_data{1, i}(:,2+j));   sgtitle(['Dimesion' num2str(j)]);     ylabel('g units')
         end
         linkaxes(ax_2,'x');    xlabel('Time(s)');
+
+
     end 
     
 end
