@@ -1,4 +1,4 @@
-function Process_extracted_cdp_TY_v0()
+function Process_extracted_cdp_TY_v0(outdir)
 %% Function for the pre-processing of collective behavior (March 2022)
 % This script was modified from the script
 % "Process_Collective_Behavior_AF_v0.m" written by Angelo Forli.
@@ -8,7 +8,7 @@ function Process_extracted_cdp_TY_v0()
 disp('...Processing Ciholas Data...');
 
 %=== Load data and group name
-extracted_CDPfile = dir(fullfile(cd, '*extracted_*'));          load(extracted_CDPfile.name);
+extracted_CDPfile = dir(fullfile(cd, '*extracted_*'));          load(fullfile(extracted_CDPfile.folder,extracted_CDPfile.name));
 batdate = extracted_CDPfile.name(11:16);
 
 % %=== Ad-hoc corrections:
@@ -53,15 +53,6 @@ options.show_fig = 1;
 options.save_data = 1;
 options.use_r_corr = 1;
 options.savemovie = 0;
-
-fig_cnt = 1;
-fig_dir = dir(fullfile(pwd,'Ext_Behavior*','*figure*.png'));
-for i = 1:length(fig_dir)
-    figstr = split(fig_dir(i).name,["figure",".png"]);
-    if fig_cnt <= str2double(figstr{end-1})
-        fig_cnt = str2double(figstr{end-1}) + 1;
-    end
-end
 
 %=== Custom graded colormap(level,RGB,bat)
 for i = 1:n_tags
@@ -246,7 +237,7 @@ if options.show_fig
     
     %=== FIGURE: Raw Position VS Corrected Position
     for j = 1:3
-        figure();   set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+        fig(0+j) = figure();   set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
         tiledlayout(n_tags,1,'TileSpacing','tight');
         for i=1:n_tags
             ax(i) = nexttile; 
@@ -259,7 +250,7 @@ if options.show_fig
     end
      
     %=== FIGURE: Raw Velocity VS Corrected Velocity
-    figure();   set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+    fig(4) = figure();   set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
     tiledlayout(n_tags,1,'TileSpacing','tight');
     for i=1:n_tags
         ax(i) = nexttile;   
@@ -270,7 +261,7 @@ if options.show_fig
 
     
     %=== FIGURE: Scatter plot all bats
-    figure();       set(gcf, 'units','normalized','outerposition',[0 0.25 1 0.5]);
+    fig(5) = figure();       set(gcf, 'units','normalized','outerposition',[0 0.25 1 0.5]);
     for i=1:n_tags
         subplot(131);  plot3(r(:,1,i),r(:,2,i),r(:,3,i),'Color', bat_clr(i,:));  xlim(r_lim(1,:)); ylim(r_lim(2,:)); zlim(r_lim(3,:));  title('3D view');                 hold on;  axis equal;
         subplot(132);  plot3(r(:,1,i),r(:,2,i),r(:,3,i),'Color', bat_clr(i,:));  xlim(r_lim(1,:)); ylim(r_lim(2,:)); zlim(r_lim(3,:));  title('Top view');   view(0,90);  hold on;  axis equal;
@@ -280,7 +271,7 @@ if options.show_fig
     
 
     %=== FIGURE: Trajectories individual bats
-    figure();   set(gcf, 'units','normalized','outerposition',[0.2 0.25 0.7 0.35]);
+    fig(6) = figure();   set(gcf, 'units','normalized','outerposition',[0.2 0.25 0.7 0.35]);
     tiledlayout(1,n_tags,'TileSpacing','none');
     for i=1:n_tags
         nexttile;  plot3(r(:,1,i),r(:,2,i),r(:,3,i),'-','Color', bat_clr(i,:));  xlim(r_lim(1,:)); ylim(r_lim(2,:)); zlim(r_lim(3,:));  title(bat_nms(i,:));  view(90,90);
@@ -288,7 +279,7 @@ if options.show_fig
     end
 
     %=== FIGURE: Density Histograms heat-map
-    figure();   set(gcf, 'units','normalized','outerposition',[0 0.25 1 0.35]);
+    fig(7) = figure();   set(gcf, 'units','normalized','outerposition',[0 0.25 1 0.35]);
     for i=1:n_tags
         sbpt = subplot(1,n_tags,i);
         % hist3(r(:,1:2,i),'edges',edges_d,'CdataMode','auto','EdgeColor','none','FaceColor','interp');
@@ -303,7 +294,7 @@ if options.show_fig
     
 
     %=== FIGURE: Velocity and flight segmentation
-    figure();       set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+    fig(8) = figure();       set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
     tiledlayout(n_tags,1,'TileSpacing','tight');
     for i = 1:n_tags
         ax(i) = nexttile;   %ax(i) = subplot(n_tags,1,i);
@@ -320,11 +311,15 @@ end
 
 %% Save figures and data
 if options.save_data
-    figHandles = findall(0,'Type','figure');
-    for i = 1:numel(figHandles)
-        saveas(figHandles(i),[analysis_directory, '/', batdate '_figure' num2str(numel(figHandles)+1-i) '.png']);
+    for i = 1:length(fig)
+        saveas(fig(i),fullfile(outdir,'figure',sprintf('Analyzsed_cdp_%d.png',i)))
     end
-    close all;
+    % 
+    % figHandles = findall(0,'Type','figure');
+    % for i = 1:numel(figHandles)
+    %     saveas(figHandles(i),[analysis_directory, '/', batdate '_figure' num2str(numel(figHandles)+1-i) '.png']);
+    % end
+    % close all;
     save([analysis_directory,'/Extracted_Behavior_', batdate, '.mat'],...
         'a','a_abs','a_flt','bat_clr','bat_nms','bat_pair_nms','bat_pairs',... % angle
         'batdate','bflying','CDPmtdata','edges_d','env','extracted_CDPfile',...

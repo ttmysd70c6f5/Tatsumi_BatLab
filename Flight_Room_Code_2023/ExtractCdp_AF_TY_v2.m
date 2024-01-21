@@ -1,4 +1,4 @@
-function ExtractCdp_AF_TY_v2(fname,outdir,use_sync,varargin)
+function ExtractCdp_AF_TY_v2(fname,outdir,varargin)
 %% Extract tracking data from Ciholas RTLS acquisition
 % Data are recorded through a python script and saved in a ASCII file
 % Data columns (comma delimited) are defines as follows:
@@ -25,7 +25,7 @@ function ExtractCdp_AF_TY_v2(fname,outdir,use_sync,varargin)
 % ATTENTION !! Please be aware that the time vector will be shifted by 1.05s, relative to the M-9 3s TTL
 
 %Open a file to record a log
-fid = fopen(fullfile(outdir,'extract_log.txt'),'w');
+% fid = fopen(fullfile(outdir,'extract_log.txt'),'w');
 
 %Load data, keep non-zero entries, sort according to ascending network times and delete duplicates
 file_name = dir(fullfile(cd, ['*' fname '*']));   file_name = file_name.name;
@@ -58,7 +58,7 @@ if nargin > 1
 end
 
 %Parameters
-% use_sync = 1;
+use_sync = 1;
 rec_duration = 10800;                                                                           %approx rec duration (s), 10800 covers 3 hours
 ntw_time = 15.65e-12;                                                                           %network tic interval (s)
 sync_SN = 17040920; %17106963;                                                                  %sync tag serial number
@@ -105,7 +105,8 @@ disp(CDPmtdata);
 
 t0 = min(RTLS_data(:,3));
 
-figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis
+fig(1) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis
+set(gcf,'Tag','extbhv')
 for i=1:n_tags
     ax_0(i) = subplot(n_tags+1,1,i);    
     plot((tag_data{1, i}(:,2)-t0)*ntw_time/60, tag_data{1, i}(:,3));    ylabel('m');    title(['Tag',num2str(i)]);              
@@ -114,7 +115,10 @@ ax_0(n_tags+1) = subplot(n_tags+1,1,n_tags+1);
 plot((sync_data(:,2)-t0)*ntw_time/60, sync_data(:,3));  ylabel('Synch');              
 linkaxes(ax_0,'x');    xlabel('Time(s)');   sgtitle('x (POSITION)');
 
-figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis acceleration
+
+fig(2) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis acceleration
+set(gcf,'Tag','extbhv')
+hold on
 for i=1:n_tags
     ax_a(i) = subplot(n_tags+1,1,i);
     plot((tag_ac_data{1, i}(:,2)-t0)*ntw_time/60, tag_ac_data{1, i}(:,3));  ylabel('g');    title(['Tag',num2str(i)]);             
@@ -162,7 +166,7 @@ if use_sync
         warning('Undetected TTLs, check alignment process');
         sync_err = 1;
     end
-    figure('units','normalized','outerposition',[0.5 0 0.5 1]);
+    fig(3) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);
     subplot(211);   plot(diff(control),'.');    ylabel('TTL count');     xlabel('#TTL pair separated by 21s');
     subplot(212);   findpeaks(normalize(sync_data(:,3),'zscore'),sync_data(:,2),'MinPeakHeight',1,'MinPeakDistance',2/ntw_time,'MinPeakWidth',0.048/ntw_time);   xlabel('Packet#');     ylabel('Sync signal (a.u.)');
     sgtitle('---Synchronization Check---');
@@ -225,7 +229,7 @@ end
 
 %% Plot Raw and Filtered position data
 
-figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis
+fig(4) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis
 for i=1:n_tags
     ax(i) = subplot(n_tags,1,i);
     plot(tag_data{1, i}(:,8), tag_data{1, i}(:,3));              hold on;     
@@ -234,7 +238,7 @@ for i=1:n_tags
 end
 linkaxes(ax,'x');    xlabel('Time(s)'); sgtitle('x (POSITION)');
 
-figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %y_axis
+fig(5) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %y_axis
 for i=1:n_tags
     ax(i) = subplot(n_tags,1,i);
     plot(tag_data{1, i}(:,8), tag_data{1, i}(:,4));              hold on;     
@@ -243,7 +247,7 @@ for i=1:n_tags
 end
 linkaxes(ax,'x');    xlabel('Time(s)'); sgtitle('y (POSITION)');
 
-figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %z_axis
+fig(6) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %z_axis
 for i=1:n_tags
     ax(i) = subplot(n_tags,1,i);
     plot(tag_data{1, i}(:,8), tag_data{1, i}(:,5));              hold on;     
@@ -254,7 +258,7 @@ linkaxes(ax,'x');    xlabel('Time(s)'); sgtitle('z (POSITION)');
 
 %% Sanity check on aquisition intervals and position values
 %Sync
-figure('units','normalized','outerposition',[0.5 0.3 0.5 0.5]);   sgtitle('Sync data');
+fig(7) = figure('units','normalized','outerposition',[0.5 0.3 0.5 0.5]);   sgtitle('Sync data');
 subplot(121);     plot(diff(sync_data(:,2))*ntw_time);         xlabel('Packet#');  ylabel('Network Time Difference(s)');
 subplot(122);     histogram(diff(sync_data(:,2))*ntw_time);    set(gca,'YScale','log'); xlabel('Network Time Difference(s)');  ylabel('Counts'); 
 disp(['Sync: Fs (network time VS interpolated): ' num2str(1/mean(diff(sync_data(:,2))*ntw_time),4) 'Hz VS ' num2str(1/mean(diff(sync_data(:,8))),4) ' Hz']);
@@ -265,13 +269,13 @@ if any(diff(sync_data(:,8))>0.5)
 end
 
 %Tags
-figure('units','normalized','outerposition',[0.5 0 0.5 1]);   sgtitle('Tags data');
+fig(8) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   sgtitle('Tags data');
 for i=1:n_tags
     ax(i) = subplot(n_tags,2,2*i-1);   plot(diff(tag_data{1, i}(:,2))*ntw_time);          ylabel('Network Time Difference(s)');          xlabel('Packet#');
     bx(i) = subplot(n_tags,2,2*i);     histogram(diff(tag_data{1, i}(:,2)*ntw_time));   set(gca,'YScale','log');     ylabel('Counts'); xlabel('Network Time Difference(s)');
     title(['Tag',num2str(i)]);
     disp(['Pos Tag' num2str(i) ': Fs (network time VS interpolated): ' num2str(1/mean(diff(tag_data{1, i}(:,2))*ntw_time),4) ' Hz VS ' num2str(1/mean(diff(tag_data{1, i}(:,8))),4) ' Hz']);
-    fprintf(fid,['Pos Tag' num2str(i) ': Fs (network time VS interpolated): ' num2str(1/mean(diff(tag_data{1, i}(:,2))*ntw_time),4) ' Hz VS ' num2str(1/mean(diff(tag_data{1, i}(:,8))),4) ' Hz\n']);
+    % fprintf(fid,['Pos Tag' num2str(i) ': Fs (network time VS interpolated): ' num2str(1/mean(diff(tag_data{1, i}(:,2))*ntw_time),4) ' Hz VS ' num2str(1/mean(diff(tag_data{1, i}(:,8))),4) ' Hz\n']);
     if any(diff(tag_data{1, i}(:,8))>0.5)
     warning('!! Long acquisition pause detected !!');
 end
@@ -281,12 +285,12 @@ linkaxes(ax,'x');       linkaxes(bx,'x');
 
 %% Plot acceleration
 if ~isempty(find((RTLS_data(:,1)==0 & any(RTLS_data(:,2)==tags_SN'))))  
-    figure('units','normalized','outerposition',[0.5 0 0.5 1]);   sgtitle('Tags data');
+    fig(9) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   sgtitle('Tags data');
     for i=1:n_tags
         ax_1(i) = subplot(n_tags,2,2*i-1);   plot(diff(tag_ac_data{1, i}(:,2))*ntw_time);          ylabel('Network Time Difference(s)');          xlabel('Packet#');
         bx_1(i) = subplot(n_tags,2,2*i);     histogram(diff(tag_ac_data{1, i}(:,2)*ntw_time));   set(gca,'YScale','log');     ylabel('Counts'); xlabel('Network Time Difference(s)');
         disp(['Acc Tag' num2str(i) ': Fs (network time VS interpolated): ' num2str(1/mean(diff(tag_ac_data{1, i}(:,2))*ntw_time),4) ' Hz VS ' num2str(1/mean(diff(tag_ac_data{1, i}(:,8))),4) ' Hz']);
-        fprintf(fid,['Acc Tag' num2str(i) ': Fs (network time VS interpolated): ' num2str(1/mean(diff(tag_ac_data{1, i}(:,2))*ntw_time),4) ' Hz VS ' num2str(1/mean(diff(tag_ac_data{1, i}(:,8))),4) ' Hz\n']);
+        % fprintf(fid,['Acc Tag' num2str(i) ': Fs (network time VS interpolated): ' num2str(1/mean(diff(tag_ac_data{1, i}(:,2))*ntw_time),4) ' Hz VS ' num2str(1/mean(diff(tag_ac_data{1, i}(:,8))),4) ' Hz\n']);
         
     end
     linkaxes(ax_1,'x');       linkaxes(bx_1,'x');
@@ -294,7 +298,7 @@ if ~isempty(find((RTLS_data(:,1)==0 & any(RTLS_data(:,2)==tags_SN'))))
   
 
     for j = 1:3
-        figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis
+        fig(9+j) = figure('units','normalized','outerposition',[0.5 0 0.5 1]);   %x_axis
         for i=1:n_tags
             ax_2(i) = subplot(n_tags,1,i);
             plot(tag_ac_data{1, i}(:,8), tag_ac_data{1, i}(:,2+j));   sgtitle(['Dimesion' num2str(j)]);     ylabel('g units')
@@ -306,5 +310,9 @@ if ~isempty(find((RTLS_data(:,1)==0 & any(RTLS_data(:,2)==tags_SN'))))
     
 end
 
+% save figures
+for i = 1:length(fig)
+    saveas(fig(i),fullfile(outdir,'figure',sprintf('Extracted_cdp_%d.png',i)))
+end
 
-fclose(fid);
+% fclose(fid);
