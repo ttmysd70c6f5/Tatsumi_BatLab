@@ -67,7 +67,7 @@ def TrajectoryPlanning_v2(trajectory_name, id1, id2, ML1_mm, ML2_mm, DV1_mm, DV2
                 if DV > DV_lim[0] and DV < DV_lim[1]:
                     im = cv2.circle(im, np.array([ML,DV]).astype(np.int16), 6, [255,0,0], 2)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            im = cv2.putText(im, f'Length from AP0: {round(probe_depth,2)} mm', (np.array(im).shape[1]//2 - 50, 50), font, 1, [0,0,255], 2, cv2.LINE_AA)
+            im = cv2.putText(im, f'Length from the plate 1: {round(probe_depth,2)} mm', (np.array(im).shape[1]//2 - 50, 50), font, 1, [0,0,255], 2, cv2.LINE_AA)
             im = cv2.putText(im, f'Azimuth: {round(probe_angle[1],2)}', (np.array(im).shape[1]//2 - 50, 100), font, 1, [0,0,255], 2, cv2.LINE_AA)
             im = cv2.putText(im, f'Pitch: {round(probe_angle[2],2)}', (np.array(im).shape[1]//2 - 50, 150), font, 1, [0,0,255], 2, cv2.LINE_AA)
             # Save images
