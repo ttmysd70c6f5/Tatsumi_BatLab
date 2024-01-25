@@ -17,11 +17,11 @@ In the example below, the hippocampal CA1 (Plate = 52, ML = 3.0 mm, DV = 3.0 mm)
 
 ```python
 # 1st target region
-plate1    = 52 # plate number
+plate1 = 52 # plate number
 ML1_mm = 3.0 # ML coordinate 
 DV1_mm = 3.0 # DV coordinate
 # 2nd target region
-plate2    = 76 # plate number 
+plate2 = 76 # plate number 
 ML2_mm = 6.4 # ML coordinate
 DV2_mm = 10.0 # DV coordinate
 ```
@@ -39,7 +39,7 @@ trj(trajectory_name, plate1, plate2, ML1_mm, ML2_mm, DV1_mm, DV2_mm)
 ```
 
 The information about the target regions and the probe angle (`Azimuth` and `Pitch`) is output. 
-```python
+```
 Target region 1: Plate 81 , sinus 1.28 (mm)
 Target region 2: Plate 84 , sinus 1.03 (mm)
 Azimuth: 83.05 degree
@@ -55,11 +55,11 @@ If both of the two target regions are on the same plate, only that plate is proc
 ```python
 from TrajectoryPlanning import TrajectoryPlanning_v2 as trj
 # 1st target region
-plate1    = 81 # plate number
+plate1 = 81 # plate number
 ML1_mm = 5.15 # ML coordinate 
 DV1_mm = 2.85 # DV coordinate
 # 2nd target region
-plate2    = 81 # plate number 
+plate2 = 81 # plate number 
 ML2_mm = 7.2 # ML coordinate
 DV2_mm = 9.6 # DV coordinate
 
