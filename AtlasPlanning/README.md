@@ -46,7 +46,7 @@ Azimuth: 83.05 degree
 Pitch: 17.01 degree
 ```
 
-A new directory with the same name as `trajectory_name` is made within the working directory. This output directory contains new atlas images with the plot of the estimated probe position as a blue circle. No circle is plotted on the plate that the estimated position is out of range (`ML = [0,8]`, `DV = 0,11.6]`). 
+A new directory with the same name as `trajectory_name` is made within the working directory. This output directory contains new atlas images with the plot of the estimated probe position as a blue circle. No circle is plotted on the plate that the estimated position is out of range (`ML = [0,8]`, `DV = [0,11.6]`). 
 The probe angle and the trajectory length from the 1st plate are plotted at the top of each plate.
 ![054_AP5 38](https://github.com/ttmysd70c6f5/Tatsumi_BatLab/assets/61156941/660409c2-6108-43cb-91e8-6ae44c5d3f7b)
 
