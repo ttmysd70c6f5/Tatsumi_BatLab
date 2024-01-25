@@ -50,7 +50,7 @@ A new directory with the same name as `trajectory_name` is made within the worki
 The probe angle and the trajectory length from the 1st plate are plotted at the top of each plate.
 ![054_AP5 38](https://github.com/ttmysd70c6f5/Tatsumi_BatLab/assets/61156941/660409c2-6108-43cb-91e8-6ae44c5d3f7b)
 
-If both of the two target regions are on the same plate, only that plate is processed and output in the output directory.
+If both of the two target regions are on the same plate, only that plate is processed and output in the output directory. Please note that the **length** shown in the output image is the distance between two target regions in this mode (c.f. the trajectory length from the first plate is shown if the target regions are on different plates).
 
 ```python
 from TrajectoryPlanning import TrajectoryPlanning_v2 as trj
