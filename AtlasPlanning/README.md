@@ -7,7 +7,7 @@ This repository is for planning and visualizing a probe trajectory. `AtlasTrajec
 - Matplotlib: run `conda install matplotlib` to install
 
 ## How to use
-First of all, you need to import the TrajectoryPlanning_v2 function from TrajectoryPlanning.py.
+First of all, you need to import the `TrajectoryPlanning_v2` function from `TrajectoryPlanning.py`.
 ```python
 from TrajectoryPlanning import TrajectoryPlanning_v2 as trj
 ```
