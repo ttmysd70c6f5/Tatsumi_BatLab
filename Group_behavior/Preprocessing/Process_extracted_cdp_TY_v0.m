@@ -312,7 +312,7 @@ end
 %% Save figures and data
 if options.save_data
     for i = 1:length(fig)
-        saveas(fig(i),fullfile(outdir,'figure',sprintf('Analyzsed_cdp_%d.png',i)))
+        saveas(fig(i),fullfile(outdir,'figure',sprintf('Analyzed_cdp_%d.png',i)))
     end
     % 
     % figHandles = findall(0,'Type','figure');
