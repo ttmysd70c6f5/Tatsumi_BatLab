@@ -5,7 +5,7 @@ function [] = exportAllTrodesRecordings(data_path, trodes_path, varargin)
 
 assert(~endsWith(data_path, ".rec"), "data_path should point to parent folder of .rec directory")
 
-recs = dir(fullfile(data_path, "*")); % list of recording directory
+recs = dir(fullfile(data_path, "*.rec")); % list of recording directory
 for i = 1:length(recs)
     path_to_recording_dir = fullfile(recs(i).folder, recs(i).name);
     if(endsWith(path_to_recording_dir, ".rec"))
