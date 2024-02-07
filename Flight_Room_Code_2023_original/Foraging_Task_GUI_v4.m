@@ -17,7 +17,9 @@ global fed_override;
 
 %Insert here the serial numbers of the tags (ORDERED)
 s_numbers = load('Serial_numbers_in_use.txt');
-bat_names = ['Bt1'; 'Bt2'; 'Bt3'; 'Bt4'; 'Bt5'; 'Bt6'; 'Bt7'];
+bat_names = ['Bt01';'Bt02';'Bt03';'Bt04';'Bt05';'Bt06';'Bt07';'Bt08';'Bt09';'Bt10'];
+% bat_names = ['Tag1';'Tag2';'Tag3';'Tag4';'Tag5';'TY01';'TY02';'TY03';'TY04';'TY05';'TY06'];
+% bat_names = ['Bt0';'Bt1';'Bt2';'Bt3';'Bt4';'Bt5';'Bt6';'Bt7';'Bt8';'Bt9';];
 bat_names = bat_names(1:length(s_numbers),:);
 rewardspeed = 1; 
 
@@ -68,7 +70,7 @@ h_stop = uicontrol(h_fig,'Style','togglebutton','String','Stop','units','normali
     'Position',[.32 .9 .3 .1],'fontsize',10,'fontweight','b','tag','run');
 
 %Feeders table
-fed_table = table2cell(table((1:4)',[100;0;0;0],0.2*ones(4,1)));
+fed_table = table2cell(table((1:4)',[100;0;0;0],0.15*ones(4,1)));
 h_feeders = uitable(h_fig,'Data',fed_table,'ColumnName',{'Feeder ID'; 'Probability'; 'Duration'},'units','normalized',...
     'Position',[.11 .15 .38 .50],'fontsize',9,'fontweight','b','ColumnEditable',true);
 
