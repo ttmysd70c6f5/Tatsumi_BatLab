@@ -73,7 +73,9 @@ original_dir = pwd;
 cd(trodes_path)
 if(exist(path_to_rec_file))
     formatted_path_to_rec_file = join(['"', path_to_rec_file, '"'], '');
-    output_path = join(['"', path_to_rec_dir, '"'], '');
+    % output_path = join(['"', path_to_rec_dir, '"'], '');
+    output_path = fullfile(path_to_rec_dir,'Processed');
+    mkdir(output_path)
     
     cmd = join(['trodesexport', cmd_flags, '-rec', formatted_path_to_rec_file, '-outputdirectory', output_path, '-interp 0']); % command to run
     
