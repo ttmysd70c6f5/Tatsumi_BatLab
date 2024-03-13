@@ -2,17 +2,20 @@ function [timestampData] = loadTrodesTimestamps(path_to_recording_dir)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
-[dirpath, dirname, ext] = fileparts(path_to_recording_dir);
-assert(strcmp(ext, ".rec"), "Trodes recording directory must end in .rec");
+% [dirpath, dirname, ext] = fileparts(path_to_recording_dir);
+% assert(strcmp(ext, ".rec"), "Trodes recording directory must end in .rec");
 
-mergedTime_dirname = dirname + "_merged.time";
+% mergedTime_dirname = dirname + "_merged.time";
 
-mergedTime_filename = dirname + "_merged.timestamps.dat";
+% mergedTime_filename = dirname + "_merged.timestamps.dat";
 
-data = readTrodesExtractedDataFile(fullfile(path_to_recording_dir, ...
-                                                  mergedTime_dirname, ...
-                                                  mergedTime_filename));
+% data = readTrodesExtractedDataFile(fullfile(path_to_recording_dir, ...
+                                                  % mergedTime_dirname, ...
+                                                  % mergedTime_filename));
 
+mergedTime_dir = dir(fullfile(path_to_recording_dir,'*.time','*.timestamps.dat'));
+mergedTime_path = fullfile(mergedTime_dir.folder,mergedTime_dir.name);
+data = readTrodesExtractedDataFile(mergedTime_path);
 
 timestampData.raw = data;
 timestampData.first_timestamp = data.first_timestamp;

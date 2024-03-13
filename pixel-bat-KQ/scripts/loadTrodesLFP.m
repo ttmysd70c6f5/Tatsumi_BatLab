@@ -4,25 +4,32 @@ function [out] = loadTrodesLFP(path_to_recording_dir, varargin)
 
 p = inputParser;
 addRequired(p, 'path_to_recording_dir');
-addOptional(p, 'kilosort_out_folder_name', 'kilosort_outdir');
+% addOptional(p, 'kilosort_out_folder_name', 'kilosort_outdir');
+addOptional(p, 'fig_output', 0);
 
 parse(p, path_to_recording_dir, varargin{:});
-kilosort_out_folder_name = p.Results.kilosort_out_folder_name;
+fig_output = p.Results.fig_output; % 1 = output figure for interporation
+% kilosort_out_folder_name = p.Results.kilosort_out_folder_name;
 
-[dirpath, dirname, ext] = fileparts(path_to_recording_dir);
-assert(strcmp(ext, ".rec"), "Trodes recording directory must end in .rec");
 
-mergedLFP_dirname = dirname + "_merged.LFP";
-mergedTime_filename = dirname + "_merged.timestamps.dat";
+% [dirpath, dirname, ext] = fileparts(path_to_recording_dir);
+% assert(strcmp(ext, ".rec"), "Trodes recording directory must end in .rec");
+
+% mergedLFP_dirname = dirname + "_merged.LFP";
+% mergedTime_filename = dirname + "_merged.timestamps.dat";
+
+mergedTime_dir = dir(fullfile(path_to_recording_dir,'*.LFP','*timestamps.dat'));
+mergedTime_filepath = fullfile(mergedTime_dir.folder,mergedTime_dir.name);
 
 %% Channel Map
 xPos = repmat([8 -24 24 -8].', [240 1]);
 yPos = reshape( repmat( [0:960/2], 2,1 ), 1, [] )*20+100;
 
 %% Load LFP sample timestamps
-timestamps = readTrodesExtractedDataFile(fullfile(path_to_recording_dir, ...
-                                                  mergedLFP_dirname, ...
-                                                  mergedTime_filename));
+% timestamps = readTrodesExtractedDataFile(fullfile(path_to_recording_dir, ...
+%                                                   mergedLFP_dirname, ...
+%                                                   mergedTime_filename));
+timestamps = readTrodesExtractedDataFile(mergedTime_filepath);
 local_sample_timestamps_usec = 1e6 * double(timestamps.fields.data) / double(timestamps.clockrate);
 timestamp_at_creation_usec = 1e6 * double(timestamps.timestamp_at_creation) / double(timestamps.clockrate);
 first_timestamp_usec = 1e6 * double(timestamps.first_timestamp) / double(timestamps.clockrate);
@@ -32,10 +39,11 @@ ttl_timestamps_usec = dio{1}.ttl_timestamp_usec;
 first_sample_timestamp_usec = dio{1}.first_timestamp_usec;
 
 %% Synchronize lfp sample timestamps with TTLs
-global_sample_timestamps = local2GlobalTime(ttl_timestamps_usec, local_sample_timestamps_usec);
+global_sample_timestamps = local2GlobalTime(ttl_timestamps_usec, local_sample_timestamps_usec,'fig_output',fig_output);
 %global_sample_timestamps = local_sample_timestamps_usec;
 
-datFiles = dir(fullfile(path_to_recording_dir, mergedLFP_dirname, '*_*.LFP_nt*ch*.dat'));
+% datFiles = dir(fullfile(path_to_recording_dir, mergedLFP_dirname, '*_*.LFP_nt*ch*.dat'));
+datFiles = dir(fullfile(path_to_recording_dir, '*.LFP', '*_*.LFP_nt*ch*.dat'));
 nChannels = length(datFiles);
 
 fnames = {datFiles.name};
@@ -59,7 +67,8 @@ channelIDs = {};
 channelPositions = {};
 for probeIdx = 1:nProbes
     % Get lfp files for probeIdx
-    datFiles = dir(fullfile(path_to_recording_dir, mergedLFP_dirname, sprintf('*_*.LFP_nt%d*ch*.dat', probeIdx)));
+    % datFiles = dir(fullfile(path_to_recording_dir, mergedLFP_dirname, sprintf('*_*.LFP_nt%d*ch*.dat', probeIdx)));
+    datFiles = dir(fullfile(path_to_recording_dir, '*.LFP', sprintf('*_*.LFP_nt%d*ch*.dat', probeIdx)));
     parsedTokens = regexp({datFiles.name}, '(\d\d\d\d)(\d\d)(\d\d)_(\d\d\d\d\d\d).*\.LFP_nt(\d)(\d\d\d)ch\d.dat', 'tokens');
     numChannels(probeIdx) = length(parsedTokens);
     channelIDs{probeIdx} = nan([1, numChannels(probeIdx)]);

@@ -11,7 +11,9 @@ function ExtractCdp_AF_TY_v2(fname,outdir,varargin)
 % Column 8 = number of receiving anchors for a tag or '0' for acc/sync
 
 % The sync signal is driven by a TTL:
-% 50 ms duration happening every 21, 13, 8, 5, 4s
+% 50 ms duration happening every 21, 13, 8, 5, 4s -> It seems that the
+% interval is 21, 13, 8, 5, 3s according to the analog signals that the
+% Cortex receive
 %-----------------------------------------------------------------
 
 %   *********USAGE EXAMPLES*****************
@@ -64,7 +66,8 @@ ntw_time = 15.65e-12;                                                           
 sync_SN = 17040920; %17106963;                                                                  %sync tag serial number
 if use_sync, tags_SN = setdiff(tags_SN,sync_SN,'stable');end
 n_tags = length(tags_SN);
-TTL_time_diff = [21; 13; 8; 5; 4];                                                              %TTL delays in s
+% TTL_time_diff = [21; 13; 8; 5; 4];                                                              %TTL delays in s
+TTL_time_diff = [21; 13; 8; 5; 3];                                                              % Modified TTL delays in s
 TTL_abs_times = [0; cumsum(repmat(TTL_time_diff,round(rec_duration*2/sum(TTL_time_diff)),1))];
 CDPmtdata.Fs = 100;                                                                             %Acquisition frequency CDP (Hz)
 CDPmtdata.tag_SN = tags_SN;
@@ -311,8 +314,9 @@ if ~isempty(find((RTLS_data(:,1)==0 & any(RTLS_data(:,2)==tags_SN'))))
 end
 
 % save figures
+mkdir(fullfile(outdir,'figure','extracted_cdp'));
 for i = 1:length(fig)
-    saveas(fig(i),fullfile(outdir,'figure',sprintf('Extracted_cdp_%d.png',i)))
+    saveas(fig(i),fullfile(outdir,'figure','extracted_cdp',sprintf('Extracted_cdp_%d.png',i)))
 end
 
 % fclose(fid);

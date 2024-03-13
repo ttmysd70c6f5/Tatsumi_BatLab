@@ -21,14 +21,14 @@ fs = 1500; % LFP sampling rate
 
 %% Putative ripples
 % Extract ripple (80-160Hz)
-lfp_ripple = bandpass(lfp,[80 160],fs); % Extract high-frequency ripples
-ripple_power = abs(hilbert(lfp_ripple)); % Hilbert transform of lfp
-ripple_pwmean = mean(ripple_power);
-ripple_pwsd = std(ripple_power); % std of lfp power
+lfp_ripple = bandpass(lfp',[80 160],fs)'; % Extract high-frequency ripples
+ripple_power = abs(hilbert(lfp_ripple')'); % Hilbert transform of lfp
+ripple_pwmean = mean(ripple_power,2);
+ripple_pwsd = std(ripple_power,0,2); % std of lfp power
 
 th = 7;
 Ripples = ripple_power > ripple_pwmean + th*ripple_pwsd;
-Ripples = find(diff([Ripples(1); Ripples]) == 1);
+Ripples = find(diff([Ripples(1), Ripples]) == 1);
 
 
 %% Fig

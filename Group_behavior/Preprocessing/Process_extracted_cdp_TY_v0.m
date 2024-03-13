@@ -1,4 +1,4 @@
-function Process_extracted_cdp_TY_v0(outdir)
+function BhvData = Process_extracted_cdp_TY_v0(outdir)
 %% Function for the pre-processing of collective behavior (March 2022)
 % This script was modified from the script
 % "Process_Collective_Behavior_AF_v0.m" written by Angelo Forli.
@@ -43,8 +43,12 @@ Fs = 100;                                                                       
 % end
 % bat_nms = bat_nms(1:n_tags,:);                                                                                  %Bat Names
 bat_nms =   ['bt01';'bt02';'bt03';'bt04';'bt05';'bt06';'bt07';'bt08';'bt09';'bt10'];
-bat_pairs = nchoosek(1:n_tags,2);                                                                               %Bat Pairs
-bat_pair_nms = [bat_nms(bat_pairs(:,1),:), '-'.*ones(length(bat_pairs),1), bat_nms(bat_pairs(:,2),:)];          %Bat Pairs Names
+if n_tags~=1
+    bat_pairs = nchoosek(1:n_tags,2);                                                                               %Bat Pairs
+else
+    bat_pairs = [1 1];
+end
+bat_pair_nms = [bat_nms(bat_pairs(:,1),:), '-'.*ones(size(bat_pairs,1),1), bat_nms(bat_pairs(:,2),:)];          %Bat Pairs Names
 bat_clr = lines(n_tags);                                                                                        %Bat Colors
 v_th = 0.5;                                                                                                     %Velocity threshold (m/s) for flight segmentation
 
@@ -62,12 +66,12 @@ for i = 1:n_tags
 end
 
 %=== Analysis folder for storing the results
-if options.save_data
-    analysis_directory=fullfile(pwd,['Ext_Behavior_',datestr(now, 'yymmdd_HHMM')]);
-    if ~exist(analysis_directory,'dir')
-        mkdir(analysis_directory);
-    end
-end
+% if options.save_data
+%     analysis_directory=fullfile(pwd,['Ext_Behavior_',datestr(now, 'yymmdd_HHMM')]);
+%     if ~exist(analysis_directory,'dir')
+%         mkdir(analysis_directory);
+%     end
+% end
 
 %% Remove duplicate samples and shift Ciholas Time by 1.05s (t = 0 corresponds to the first '3s' Master-9 TTL)
 
@@ -311,8 +315,9 @@ end
 
 %% Save figures and data
 if options.save_data
+    mkdir(fullfile(outdir,'figure','processed_cdp'))
     for i = 1:length(fig)
-        saveas(fig(i),fullfile(outdir,'figure',sprintf('Analyzed_cdp_%d.png',i)))
+        saveas(fig(i),fullfile(outdir,'figure','processed_cdp',sprintf('Analyzed_cdp_%d.png',i)))
     end
     % 
     % figHandles = findall(0,'Type','figure');
@@ -320,12 +325,45 @@ if options.save_data
     %     saveas(figHandles(i),[analysis_directory, '/', batdate '_figure' num2str(numel(figHandles)+1-i) '.png']);
     % end
     % close all;
-    save([analysis_directory,'/Extracted_Behavior_', batdate, '.mat'],...
-        'a','a_abs','a_flt','bat_clr','bat_nms','bat_pair_nms','bat_pairs',... % angle
-        'batdate','bflying','CDPmtdata','edges_d','env','extracted_CDPfile',...
-        'f_num','f_smp','Fs','n_tags','options',... % Group_names
-        'r','r_lim','r_old','r_qt','stat_periods',...
-        't','T','v','v_abs','v_th','wBeats');
+
+    BhvData.ac = a;
+    BhvData.ac_abs = a_abs;
+    BhvData.ac_flt = a_flt;
+    BhvData.bat_clr = bat_clr;
+    BhvData.bat_nms = bat_nms;
+    BhvData.bat_pair_nms = bat_pair_nms;
+    BhvData.bat_pairs = bat_pairs;
+    BhvData.batdate = batdate;
+    BhvData.bflying = bflying;
+    BhvData.CDPmtdata = CDPmtdata;
+    BhvData.edges_d = edges_d;
+    BhvData.env = env;
+    BhvData.extracted_CDPfile = extracted_CDPfile;
+    BhvData.f_num = f_num;
+    BhvData.f_smp = f_smp;
+    BhvData.fs = Fs;
+    BhvData.n_tags = n_tags;
+    BhvData.options = options;
+    BhvData.r  = r;
+    BhvData.r_lim = r_lim;
+    BhvData.r_old = r_old;
+    BhvData.r_qt = r_qt;
+    BhvData.stat_periods = stat_periods;
+    BhvData.t = t;
+    BhvData.T = T;
+    BhvData.v = v;
+    BhvData.v_abs = v_abs;
+    BhvData.v_th = v_th;
+    BhvData.wBeats = wBeats;
+
+    save(fullfile(outdir,sprintf('Extracted_Behavior_%s.mat',batdate)),'BhvData')
+
+    % save([analysis_directory,'/Extracted_Behavior_', batdate, '.mat'],...
+    %     'a','a_abs','a_flt','bat_clr','bat_nms','bat_pair_nms','bat_pairs',... % angle
+    %     'batdate','bflying','CDPmtdata','edges_d','env','extracted_CDPfile',...
+    %     'f_num','f_smp','Fs','n_tags','options',... % Group_names
+    %     'r','r_lim','r_old','r_qt','stat_periods',...
+    %     't','T','v','v_abs','v_th','wBeats');
 end
 
 %% Save movie at 10Hz with bat trajectories

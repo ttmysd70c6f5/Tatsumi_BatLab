@@ -51,10 +51,17 @@ addpath(genpath(trodes_path))
 
 
 %% Parse recording directory
-path_to_rec_file = dir(fullfile(path_to_rec_dir,'*.rec')); path_to_rec_file = fullfile(path_to_rec_file.folder,path_to_rec_file.name);
-[dirpath, dirname, ext] = fileparts(path_to_rec_file);
+if(~isTethered)
+    path_to_rec_file = dir(fullfile(path_to_rec_dir,'*merged.rec')); path_to_rec_file = fullfile(path_to_rec_file.folder,path_to_rec_file.name);
+    [dirpath, dirname, ext] = fileparts(path_to_rec_file);
+    fparts = regexp(join([dirname ext],''), "(\d\d\d\d)(\d\d)(\d\d)_(\d\d\d\d\d\d)_merged.rec", "tokens");
+else
+    path_to_rec_file = dir(fullfile(path_to_rec_dir,'*.rec')); path_to_rec_file = fullfile(path_to_rec_file.folder,path_to_rec_file.name);
+    [dirpath, dirname, ext] = fileparts(path_to_rec_file);
+    fparts = regexp(join([dirname ext],''), "(\d\d\d\d)(\d\d)(\d\d)_(\d\d\d\d\d\d).rec", "tokens");
+end
 % [dirpath, dirname, ext] = fileparts(path_to_rec_dir);
-fparts = regexp(join([dirname ext],''), "(\d\d\d\d)(\d\d)(\d\d)_(\d\d\d\d\d\d)_merged.rec", "tokens");
+
 YY = fparts{1}{1}(3:end);
 MM = fparts{1}{2};
 DD = fparts{1}{3};
@@ -84,7 +91,7 @@ if(exist(path_to_rec_file))
     disp(cmdout)
 
     
-    chanmap_files = dir(join([path_to_rec_dir, '\*kilosort\*channelmap*.dat']));
+    chanmap_files = dir(join([output_path, '\*kilosort\*channelmap*.dat']));
     for iProbe = 1:length(chanmap_files)
         chanmap_file = chanmap_files(iProbe)
         parts = split(chanmap_file(1).name, '.');

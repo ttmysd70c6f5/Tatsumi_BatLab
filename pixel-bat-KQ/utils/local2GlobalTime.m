@@ -41,10 +41,12 @@ addRequired(p,'local_ttl_ts_us');
 addRequired(p,'local_sample_ts_us');
 addOptional(p,'global_ttl_interval_us',defaultTTLInterval);
 addOptional(p,'custom_global_ttl_ts_us',0);
+addOptional(p, 'fig_output', 0);
 parse(p,local_ttl_ts_us,local_sample_ts_us,varargin{:});
 
 global_ttl_interval_us = p.Results.global_ttl_interval_us;
 custom_global_ttl_ts_us = p.Results.custom_global_ttl_ts_us;
+fig_output = p.Results.fig_output; % 1 = output figure for interporation
 % ------------------------------------------------------------------
 
 
@@ -54,9 +56,11 @@ num_ttl = length(local_ttl_ts_us); % Total number of TTLs
 local_ttl_t0 = local_ttl_ts_us(1); % First local TTL timestamp in usec
 if(custom_global_ttl_ts_us == 0) % If no custom global TTL defined
     % Global ttl ts (ground truth) as defined by global ttl spacing
-    global_ttl_ts_us = linspace(round(local_ttl_t0), round(local_ttl_t0 + (num_ttl-1)*global_ttl_interval_us), num_ttl);
+    % global_ttl_ts_us = linspace(round(local_ttl_t0), round(local_ttl_t0 + (num_ttl-1)*global_ttl_interval_us), num_ttl);
+    global_ttl_ts_us = linspace(0,(num_ttl-1)*global_ttl_interval_us,num_ttl); % t=0 at the first TTL
 else % Use custom global TTL timestamps
-    global_ttl_ts_us = custom_global_ttl_ts_us;
+    % global_ttl_ts_us = custom_global_ttl_ts_us;
+    global_ttl_ts_us = custom_global_ttl_ts_us - custom_global_ttl_ts_us(1);
 end
 
 %disp(diff(global_ttl_ts_us));
@@ -72,13 +76,15 @@ close all
 
 
 % Plot interpolation results
-figure;
-scatter(local_ttl_ts_us,global_ttl_ts_us,30,'MarkerEdgeColor','red', 'MarkerEdgeAlpha',0.2)
-hold on
-plot(local_sample_ts_us,global_sample_ts_us, 'LineWidth', 2, 'Color','blue')
-title('Interpolation')
-xlabel('Local TTL timestamps (usec)');
-ylabel('Global timestamps (usec)')
-axis equal;
+if fig_output == 1
+    figure;
+    scatter(local_ttl_ts_us,global_ttl_ts_us,30,'MarkerEdgeColor','red', 'MarkerEdgeAlpha',0.2)
+    hold on
+    plot(local_sample_ts_us,global_sample_ts_us, 'LineWidth', 2, 'Color','blue')
+    title('Interpolation')
+    xlabel('Local TTL timestamps (usec)');
+    ylabel('Global timestamps (usec)')
+    axis equal;
+end
 
 end
