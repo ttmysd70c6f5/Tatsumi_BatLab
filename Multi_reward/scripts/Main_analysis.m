@@ -2,7 +2,7 @@
 clear all
 % Load the table of rec info
 ParDir = 'Z:\users\Tatsumi\data\MultiReward'; % parent directory
-recListPath = 'L:\My Drive\YartsevLab\Experiment\Multi_reward\Log\Multireward_exp_list_2024.xlsx'; % table of rec info
+recListPath = 'K:\My Drive\YartsevLab\Experiment\Multi_reward\Log\Multireward_exp_list_2024.xlsx'; % table of rec info
 allRecs = GetRecList(recListPath); % load the rec info list
 
 % Specify the index of session to be loaded
@@ -13,14 +13,14 @@ allRecs = GetRecList(recListPath); % load the rec info list
 %%% 240208
 % recID = 6;
 % recID = 7;
-recID = 8;
+% recID = 8;
 %%% 240209_1
 % recID = 9;
 % recID = 10;
 %%% 240209_2
 % recID = 11;
-%%% 240210_1
-% recID = 12;
+% %% 240210_1
+recID = 12;
 % recID = 13;
 %%% 240210_2
 % recID = 14;
@@ -74,8 +74,6 @@ mtData.trjName = trjName;
 
 %Layer information
 spikeData = adhoc_ch_reconstruct(spikeData,trjName,bname_ephys);
-
-
 
 %% Agent-vector coding
 saveDir = fullfile('F:\Data\GroupForaging\Analysis\figure\vector_coding',mtData.recName,sprintf('%s_%s',mtData.bname_ephys,mtData.trjName));
