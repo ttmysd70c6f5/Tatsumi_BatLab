@@ -7,19 +7,21 @@ clear global;
 load('FR_config.mat');
 
 %Declare global variables
-global h_directory h_run h_pause h_stop n_bats h_bat h_feeders h_session
+global h_directory h_run h_pause h_stop n_bats h_bat h_feeders h_session h_Name h_Exp
 global lightbar1 lightbar2 lightbar3 lightbar4
 global feed1 feed2 feed3 feed4 ard trg
 global rewardspeed h_d_rew
 global h_feed1 h_feed2 h_feed3 h_feed4 h_reload
 global s_numbers bat_ids;
+global h_Rew1 h_Rew2 h_Rew3 h_Rew4
 % global fed_override;
 
 %Insert here the serial numbers of the tags (ORDERED)
 % s_numbers = load('Serial_numbers_in_use.txt');
-s_table = readtable('serial_numbers.csv','Format','%d %s'); s_table = s_table(~strcmp(s_table.Bat_id,''),:);
+s_table = readtable('serial_numbers.csv','Format','%d %s %s'); s_table = s_table(~strcmp(s_table.Bat_id,''),:);
 bat_ids = s_table.Bat_id;
 s_numbers = double(s_table.Serial_number);
+tag_names = s_table.Name;
 % bat_names = ['Bt00'; 'Bt01'; 'Bt02'; 'Bt03'; 'Bt04'; 'Bt05'; 'Bt06'; 'Bt07'; 'Bt08'; 'Bt09'; 'Bt10'; 'Bt11'; 'Bt12'; 'Bt13'; 'Bt14'; 'Bt15'];
 % bat_names = bat_names(1:length(s_numbers),:);
 rewardspeed = 1; 
@@ -45,32 +47,8 @@ rand('state',sum(100*clock));
 %% Create GUI
 h_fig = figure('name','4 Feeders task','ToolBar','none','DockControls','on','MenuBar','none');  
 % h_fig = uifigure('Name','4 Feeders task');
-set(h_fig, 'units','normalized','Position',[0.05 0.5 0.25 0.37])
+set(h_fig, 'units','normalized','Position',[0.05 0.3 0.5 0.5])
 % [65 143 700 500]
-
-%default directory
-h_dir = uicontrol(h_fig,'Style','text','String','Directory and File Name','units','normalized',...
-   'Position',[.01 .84 .3 .05],'fontsize',9,'fontweight','b'); 
-h_directory = uicontrol(h_fig,'Style','edit','String',fullfile(cd,'Data', datestr(now,'mmddyy_HH_MM')),'units','normalized',...
-    'Position',[.01 .80 .96 .05],'fontsize',9,'fontweight','b');
-
-%Number of bats
-h_numb = uicontrol(h_fig,'Style','text','String','Number of bats','units','normalized',...
-   'Position',[.01 .74 .3 .05],'fontsize',9,'fontweight','b'); 
-n_bats = uicontrol(h_fig,'Style','edit','String',num2str(length(s_numbers)),'units','normalized',...
-    'Position',[.01 .70 .3 .05],'fontsize',9,'fontweight','b');
-
-%Current session
-h_sess = uicontrol(h_fig,'Style','text','String','Current session','units','normalized',...
-   'Position',[.34 .74 .3 .05],'fontsize',9,'fontweight','b'); 
-h_session = uicontrol(h_fig,'Style','edit','String',num2str(length(session_init)),'units','normalized',...
-    'Position',[.34 .70 .3 .05],'fontsize',9,'fontweight','b');
-
-%Reward decrement
-h_rew = uicontrol(h_fig,'Style','text','String','Reward decrement (s)','units','normalized',...
-   'Position',[.67 .74 .3 .05],'fontsize',9,'fontweight','b'); 
-h_d_rew = uicontrol(h_fig,'Style','edit','String','0.00','units','normalized',...
-    'Position',[.67 .70 .3 .05],'fontsize',9,'fontweight','b');
 
 %hitting run starts the task
 h_run = uicontrol(h_fig,'Style','togglebutton','String','Run','units','normalized',...
@@ -84,22 +62,80 @@ h_pause = uicontrol(h_fig,'Style','togglebutton','String','Pause','units','norma
 h_stop = uicontrol(h_fig,'Style','togglebutton','String','Stop','units','normalized',...
     'Position',[.63 .9 .3 .1],'fontsize',10,'fontweight','b','tag','run');
 
+
+%default directory
+h_dir = uicontrol(h_fig,'Style','text','String','Directory and File Name','units','normalized',...
+   'Position',[.01 .84 .3 .05],'fontsize',9,'fontweight','b'); 
+h_directory = uicontrol(h_fig,'Style','edit','String',fullfile(cd,'Data', datestr(now,'mmddyy_HH_MM')),'units','normalized',...
+    'Position',[.01 .80 .65 .05],'fontsize',9,'fontweight','b');
+
+h_name = uicontrol(h_fig,'Style','text','String','Rec Name','units','normalized',...
+   'Position',[.67 .84 .3 .05],'fontsize',9,'fontweight','b'); 
+h_Name = uicontrol(h_fig,'Style','edit','String','','units','normalized',...
+    'Position',[.67 .80 .3 .05],'fontsize',9,'fontweight','b');
+
+%Number of bats
+h_numb = uicontrol(h_fig,'Style','text','String','Number of bats','units','normalized',...
+   'Position',[.01 .74 .23 .05],'fontsize',9,'fontweight','b'); 
+n_bats = uicontrol(h_fig,'Style','edit','String',num2str(length(s_numbers)),'units','normalized',...
+    'Position',[.01 .70 .23 .05],'fontsize',9,'fontweight','b');
+
+%Current session
+h_sess = uicontrol(h_fig,'Style','text','String','Current session','units','normalized',...
+   'Position',[.26 .74 .23 .05],'fontsize',9,'fontweight','b'); 
+h_session = uicontrol(h_fig,'Style','edit','String',num2str(length(session_init)),'units','normalized',...
+    'Position',[.26 .70 .23 .05],'fontsize',9,'fontweight','b');
+
+%Reward decrement
+h_rew = uicontrol(h_fig,'Style','text','String','Reward decrement (s)','units','normalized',...
+   'Position',[.51 .74 .23 .05],'fontsize',9,'fontweight','b'); 
+h_d_rew = uicontrol(h_fig,'Style','edit','String','0.00','units','normalized',...
+    'Position',[.51 .70 .23 .05],'fontsize',9,'fontweight','b');
+
+%ExpType
+h_exp = uicontrol(h_fig,'Style','text','String','Exp Type','units','normalized',...
+   'Position',[.76 .74 .23 .05],'fontsize',9,'fontweight','b'); 
+h_Exp = uicontrol(h_fig,'Style','popupmenu','String',{'group','solo'},'units','normalized',...
+    'Position',[.76 .70 .23 .05],'fontsize',9,'fontweight','b');
+
+%Reward types
+h_rew1 = uicontrol(h_fig,'Style','text','String','Reward 1','units','normalized',...
+   'Position',[.01 .64 .23 .05],'fontsize',9,'fontweight','b'); 
+h_Rew1 = uicontrol(h_fig,'Style','edit','String','','units','normalized',...
+    'Position',[.01 .60 .23 .05],'fontsize',9,'fontweight','b');
+
+h_rew2 = uicontrol(h_fig,'Style','text','String','Reward 2','units','normalized',...
+   'Position',[.26 .64 .23 .05],'fontsize',9,'fontweight','b'); 
+h_Rew2 = uicontrol(h_fig,'Style','edit','String','','units','normalized',...
+    'Position',[.26 .60 .23 .05],'fontsize',9,'fontweight','b');
+
+h_rew3 = uicontrol(h_fig,'Style','text','String','Reward 3','units','normalized',...
+   'Position',[.51 .64 .23 .05],'fontsize',9,'fontweight','b'); 
+h_Rew3 = uicontrol(h_fig,'Style','edit','String','','units','normalized',...
+    'Position',[.51 .60 .23 .05],'fontsize',9,'fontweight','b');
+
+h_rew4 = uicontrol(h_fig,'Style','text','String','Reward 4','units','normalized',...
+   'Position',[.76 .64 .23 .05],'fontsize',9,'fontweight','b'); 
+h_Rew4 = uicontrol(h_fig,'Style','edit','String','','units','normalized',...
+    'Position',[.76 .60 .23 .05],'fontsize',9,'fontweight','b');
+
+
 %Feeders table
 % sAlign = uistyle("HorizontalAlignment","center");
-fed_table = table2cell(table((1:4)',true(4,1),true(4,1),[100;0;0;0],0.2*ones(4,1)));
-h_feeders = uitable(h_fig,'Data',fed_table,'ColumnName',{'Feeder ID'; 'Enabled'; 'State'; 'Probability'; 'Duration'},'units','normalized',...
-    'Position',[.11 .05 .46 .60],'fontsize',9,'fontweight','b','ColumnEditable',true,'ColumnWidth',{60,50,40,65,55});
+fed_table = table2cell(table((1:4)',true(4,1),true(4,1),[100;0;0;0],0.2*ones(4,1),zeros(4,1)));
+h_feeders = uitable(h_fig,'Data',fed_table,'ColumnName',{'Feeder ID'; 'Enabled'; 'State'; 'Probability'; 'Duration'; 'Reward'},'units','normalized',...
+    'Position',[.11 .05 .38 .50],'fontsize',9,'fontweight','b','ColumnEditable',true,'ColumnWidth',{60,50,40,65,55,60});
 % addStyle(h_feeders,sAlign)
 
 %Bat table
 dim = str2double(n_bats.String);
 if dim>1
-    bat_table = table2cell(table(cell2mat(bat_ids),true(dim,1),zeros(dim,1),zeros(dim,1)));
+    bat_table = table2cell(table(tag_names,cell2mat(bat_ids),true(dim,1),zeros(dim,1),zeros(dim,1),false(dim,1),repmat({''},dim,1)));
 else
-    bat_table = table2cell(table({bat_names},true(dim,1),zeros(dim,1),zeros(dim,1)));
+    bat_table = table2cell(table({tag_names},cell2mat(bat_ids),true(dim,1),zeros(dim,1),zeros(dim,1),false(dim,1),repmat({''},dim,1)));
 end
-h_bat = uitable(h_fig,'Data',bat_table,'ColumnName',{'Bat ID'; 'Enabled'; 'Trials'; 'Correct';},'units','normalized',...
-    'Position',[.58 .05 .41 .60],'fontsize',9,'fontweight','b','ColumnEditable',true,'ColumnWidth',{45,48,66,66});
+h_bat = uitable(h_fig,'Data',bat_table,'ColumnName',{'Tag'; 'Bat ID'; 'Enabled'; 'Trials'; 'Correct'; 'Ephys'; 'Region'},'units','normalized',...
+    'Position',[.50 .05 .49 .50],'fontsize',9,'fontweight','b','ColumnEditable',true,'ColumnWidth',{50,45,48,60,60,45,60});
 % addStyle(h_bat,sAlign)
 
 %feed buttons

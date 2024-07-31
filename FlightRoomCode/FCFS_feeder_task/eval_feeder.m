@@ -35,7 +35,7 @@ else
     
     %Evaluate the distance to feeder for all bats
     d_feeder = vecnorm(mean(pos,3)-F(feeder_n,:),2,2); % distances to feeder: [sn,1]
-    if all(d_feeder > d_th) % if the feeder is emptied
+    if all(d_feeder(~isnan(d_feeder)) > d_th) % if the feeder is emptied
         state = 1;
     else
         state = 0;
