@@ -4,7 +4,7 @@
 % recName = mtData.recName;
 
 %% Load neural data
-recListPath = 'H:\My Drive\YartsevLab\Experiment\Multi_reward\Log\Multireward_exp_list_2024.xlsx'; % table of rec info
+recListPath = 'I:\My Drive\YartsevLab\Experiment\Multi_reward\Log\Multireward_exp_list_2024.xlsx'; % table of rec info
 allRecs = GetRecList(recListPath); % load the rec info list
 
 % Load data
